@@ -2,6 +2,13 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QSpinBox>
+
+class HexSpinbox : public QSpinBox
+{
+    virtual QString textFromValue (int val            ) const;
+    virtual int     valueFromText (const QString &text) const;
+};
 
 namespace Ui {
 class MainWindow;
@@ -28,5 +35,6 @@ private slots:
     void SlotOnSpnDecimal ();
 
 };
+
 
 #endif // MAINWINDOW_H

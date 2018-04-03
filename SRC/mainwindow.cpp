@@ -3,6 +3,14 @@
 
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
+QString HexSpinbox::textFromValue (int val            ) const
+{
+}
+int     HexSpinbox::valueFromText (const QString &text) const
+{
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -92,6 +100,7 @@ void MainWindow :: ShowValue ()
     ui->chkByte3_29->setChecked (tmp_byte & 0x20);
     ui->chkByte3_30->setChecked (tmp_byte & 0x40);
     ui->chkByte3_31->setChecked (tmp_byte & 0x80);
+
 /*
     // fill byte 0 hexchar-elements
     tmp_byte = (Value & 0x0000000f) >> 0;
