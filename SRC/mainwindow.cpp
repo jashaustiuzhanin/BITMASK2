@@ -17,6 +17,8 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    ui->spnDecimal->setMaximum (0x7FFFFFFF);
+
     ShowInProcessFlag = false;
     Value = 0;
     ShowValue ();
