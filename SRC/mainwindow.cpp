@@ -18,6 +18,15 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     ui->spnDecimal->setMaximum (0x7FFFFFFF);
+    ui->spnHexadecimal->SetBitsCount_32 ();
+    ui->spnByte0_HexRight->SetBitsCount_04 ();
+    ui->spnByte0_HexLeft ->SetBitsCount_04 ();
+    ui->spnByte1_HexRight->SetBitsCount_04 ();
+    ui->spnByte1_HexLeft ->SetBitsCount_04 ();
+    ui->spnByte2_HexRight->SetBitsCount_04 ();
+    ui->spnByte2_HexLeft ->SetBitsCount_04 ();
+    ui->spnByte3_HexRight->SetBitsCount_04 ();
+    ui->spnByte3_HexLeft ->SetBitsCount_04 ();
 
     ShowInProcessFlag = false;
     Value = 0;
@@ -56,7 +65,8 @@ void MainWindow :: ShowValue ()
 
     // fill hexadecimal view
     tmp_str = QString::number (Value, 16).toUpper();
-    ui->edtHexadecimal->setText (tmp_str);
+//  ui->edtHexadecimal->setText (tmp_str);
+    ui->spnHexadecimal->setValue (Value);
 
     // fill binary view
     tmp_str = QString::number (Value, 2 ).toUpper();
@@ -112,6 +122,13 @@ void MainWindow :: ShowValue ()
     tmp_str = QString::number (tmp_byte, 16).toUpper();
     ui->spnByte0_HexLeft->setValue (tmp_str);
 */
+    // fill byte 0 hexchar-elements
+    tmp_byte = (Value & 0x0000000f) >> 0;
+    ui->spnByte0_HexRight->setValue (tmp_byte);
+    tmp_byte = (Value & 0x000000f0) >> 4;
+    ui->spnByte0_HexLeft ->setValue (tmp_byte);
+
+
     // release checking for reentering
     ShowInProcessFlag = false;
 }

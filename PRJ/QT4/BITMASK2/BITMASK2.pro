@@ -15,11 +15,13 @@ TEMPLATE = app
 SOURCES +=\
     ../../../SRC/mainwindow.cpp \
     ../../../SRC/main.cpp \
-    ../../../SRC/tspinbox64.cpp
+    ../../../SRC/tspinbox64.cpp \
+    ../../../SRC/thexspinbox.cpp
 
 HEADERS  += \
     ../../../SRC/mainwindow.h \
-    ../../../SRC/tspinbox64.h
+    ../../../SRC/tspinbox64.h \
+    ../../../SRC/thexspinbox.h
 
 FORMS    += \
     ../../../SRC/mainwindow.ui

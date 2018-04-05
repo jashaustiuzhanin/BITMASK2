@@ -99,7 +99,14 @@ color: rgb(255, 200, 200);</string>
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="edtHexadecimal"/>
+          <widget class="THexSpinBox" name="spnHexadecimal">
+           <property name="minimumSize">
+            <size>
+             <width>160</width>
+             <height>0</height>
+            </size>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>
@@ -385,7 +392,7 @@ color: rgb(255, 200, 200);</string>
            </layout>
           </item>
           <item row="1" column="4" colspan="4">
-           <widget class="QSpinBox" name="spnByte3_HexRight">
+           <widget class="THexSpinBox" name="spnByte3_HexRight">
             <property name="buttonSymbols">
              <enum>QAbstractSpinBox::UpDownArrows</enum>
             </property>
@@ -395,7 +402,7 @@ color: rgb(255, 200, 200);</string>
            </widget>
           </item>
           <item row="1" column="0" colspan="4">
-           <widget class="QSpinBox" name="spnByte3_HexLeft"/>
+           <widget class="THexSpinBox" name="spnByte3_HexLeft"/>
           </item>
          </layout>
         </widget>
@@ -647,10 +654,10 @@ color: rgb(255, 200, 200);</string>
            </layout>
           </item>
           <item row="1" column="0" colspan="4">
-           <widget class="QSpinBox" name="spnByte2_HexLeft"/>
+           <widget class="THexSpinBox" name="spnByte2_HexLeft"/>
           </item>
           <item row="1" column="4" colspan="4">
-           <widget class="QSpinBox" name="spnByte2_HexRight">
+           <widget class="THexSpinBox" name="spnByte2_HexRight">
             <property name="buttonSymbols">
              <enum>QAbstractSpinBox::UpDownArrows</enum>
             </property>
@@ -909,10 +916,10 @@ color: rgb(255, 200, 200);</string>
            </layout>
           </item>
           <item row="1" column="0" colspan="4">
-           <widget class="QSpinBox" name="spnByte1_HexLeft"/>
+           <widget class="THexSpinBox" name="spnByte1_HexLeft"/>
           </item>
           <item row="1" column="4" colspan="4">
-           <widget class="QSpinBox" name="spnByte1_HexRight">
+           <widget class="THexSpinBox" name="spnByte1_HexRight">
             <property name="buttonSymbols">
              <enum>QAbstractSpinBox::UpDownArrows</enum>
             </property>
@@ -931,7 +938,7 @@ color: rgb(255, 200, 200);</string>
          </property>
          <layout class="QGridLayout" name="gridLayout_18">
           <item row="1" column="4" colspan="4">
-           <widget class="QSpinBox" name="spnByte0_HexRight">
+           <widget class="THexSpinBox" name="spnByte0_HexRight">
             <property name="buttonSymbols">
              <enum>QAbstractSpinBox::UpDownArrows</enum>
             </property>
@@ -1181,7 +1188,7 @@ color: rgb(255, 200, 200);</string>
            </layout>
           </item>
           <item row="1" column="0" colspan="4">
-           <widget class="QSpinBox" name="spnByte0_HexLeft"/>
+           <widget class="THexSpinBox" name="spnByte0_HexLeft"/>
           </item>
          </layout>
         </widget>
@@ -1217,6 +1224,11 @@ color: rgb(255, 200, 200);</string>
    <class>TSpinBox64</class>
    <extends>QSpinBox</extends>
    <header>tspinbox64.h</header>
+  </customwidget>
+  <customwidget>
+   <class>THexSpinBox</class>
+   <extends>QSpinBox</extends>
+   <header>thexspinbox.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
