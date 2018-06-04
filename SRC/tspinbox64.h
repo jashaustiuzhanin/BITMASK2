@@ -2,27 +2,12 @@
 #define TSPINBOX64_H
 
 #include <QSpinBox>
-/*
-class TSpinBox64 : public QSpinBox
-{
-    Q_OBJECT
-public:
-    explicit TSpinBox64(QObject *parent = 0);
-    
-signals:
-    
-public slots:
-
-private:
-    qint64 Value64;    
-};
-
-*/
 
 // https://stackoverflow.com/questions/26581444/qspinbox-with-unsigned-int-for-hex-input
 
 class TSpinBox64 : public QSpinBox
 {
+//  Q_OBJECT
 public:
 
     TSpinBox64 (bool only16Bits, QWidget *parent = 0) : QSpinBox(parent), m_only16Bits(only16Bits)
@@ -62,6 +47,8 @@ protected:
         QString copy (input);
         if (copy.startsWith ("0x"))
             copy.remove(0, 2);
+        if (copy.startsWith ("16#"))
+            copy.remove(0, 3);
         pos -= copy.size() - copy.trimmed().size();
         copy = copy.trimmed();
         if (copy.isEmpty())
@@ -92,3 +79,19 @@ private:
 
 #endif // TSPINBOX64_H
 
+/*
+class TSpinBox64 : public QSpinBox
+{
+    Q_OBJECT
+public:
+    explicit TSpinBox64(QObject *parent = 0);
+    
+signals:
+    
+public slots:
+
+private:
+    qint64 Value64;    
+};
+
+*/

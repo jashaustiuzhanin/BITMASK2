@@ -32,7 +32,8 @@ MainWindow::MainWindow(QWidget *parent) :
     Value = 0;
     ShowValue ();
 
-    QObject :: connect (ui->spnDecimal, SIGNAL(valueChanged(int)), this, SLOT(SlotOnSpnDecimal()));
+    QObject :: connect (ui->spnDecimal    , SIGNAL(valueChanged(int)), this, SLOT(SlotOnSpnDecimal    ()));
+    QObject :: connect (ui->spnHexadecimal, SIGNAL(valueChanged(int)), this, SLOT(SlotOnSpnHexadecimal()));
 }
 
 /*------------------------------------------------------------------*/
@@ -47,6 +48,13 @@ MainWindow::~MainWindow()
 void MainWindow :: SlotOnSpnDecimal ()
 {
     Value = ui->spnDecimal->value ();
+    ShowValue ();
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow :: SlotOnSpnHexadecimal ()
+{
+    Value = ui->spnHexadecimal->value ();
     ShowValue ();
 }
 /*------------------------------------------------------------------*/

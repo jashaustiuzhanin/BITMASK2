@@ -32,7 +32,8 @@ private:
 private slots:
     void ShowValue ();
 
-    void SlotOnSpnDecimal ();
+    void SlotOnSpnDecimal     ();
+    void SlotOnSpnHexadecimal ();
 
 };
 

@@ -3,13 +3,18 @@
 
 #include <QSpinBox>
 
+
+
+#ifdef __DELETED_FRAGMENT__
+#endif /*__DELETED_FRAGMENT__*/
+
+
 class THexSpinBox : public QSpinBox
 {
-    Q_OBJECT
-
 public:
 
-    explicit THexSpinBox (QWidget *parent = 0) : QSpinBox(parent)
+//  explicit THexSpinBox (QWidget *parent = 0) : QSpinBox(parent)
+    THexSpinBox (QWidget *parent = 0) : QSpinBox(parent)
     {
         setPrefix ("0x");
 //      setDisplayIntegerBase (16);
@@ -49,6 +54,7 @@ public:
         BitsCount = 4;
         SetBitRange ();
     }
+
 protected:
 
     QString textFromValue (int value) const
@@ -63,6 +69,9 @@ protected:
 
     QValidator::State validate (QString &input, int &pos) const
     {
+        return QValidator::Acceptable;
+
+
         QString copy (input);
         if (copy.startsWith ("0x"))
             copy.remove(0, 2);
@@ -114,5 +123,8 @@ private:
     }
 
 };
+
+
+
 
 #endif // THEXSPINBOX_H
