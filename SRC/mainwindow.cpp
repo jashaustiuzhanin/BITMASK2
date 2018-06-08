@@ -3,12 +3,14 @@
 
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
+/*
 QString HexSpinbox::textFromValue (int val            ) const
 {
 }
 int     HexSpinbox::valueFromText (const QString &text) const
 {
 }
+*/
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
 MainWindow::MainWindow(QWidget *parent) :
@@ -17,7 +19,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    ui->spnDecimal->setMaximum (0x7FFFFFFF);
+    ui->spnDecimal    ->setMaximum (0x1FFFFFFF);
     ui->spnHexadecimal->SetBitsCount_32 ();
     ui->spnByte0_HexRight->SetBitsCount_04 ();
     ui->spnByte0_HexLeft ->SetBitsCount_04 ();
@@ -33,7 +35,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ShowValue ();
 
     QObject :: connect (ui->spnDecimal    , SIGNAL(valueChanged(int)), this, SLOT(SlotOnSpnDecimal    ()));
-    QObject :: connect (ui->spnHexadecimal, SIGNAL(valueChanged(int)), this, SLOT(SlotOnSpnHexadecimal()));
+    QObject :: connect (ui->spnHexadecimal, SIGNAL(valueChanged(   )), this, SLOT(SlotOnSpnHexadecimal()));
 }
 
 /*------------------------------------------------------------------*/

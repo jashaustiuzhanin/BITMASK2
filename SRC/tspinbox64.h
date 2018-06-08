@@ -55,8 +55,8 @@ protected:
             return QValidator::Intermediate;
         input = QString("0x") + copy.toUpper();
         bool okay;
-        unsigned int val = copy.toUInt(&okay, 16);
-        if (!okay || (m_only16Bits && val > 0xFFFF))
+        unsigned long int val = copy.toLong (&okay, 16);
+        if (!okay || (m_only16Bits && val > 0xFFFFFFFF))
             return QValidator::Invalid;
         return QValidator::Acceptable;
     }
@@ -75,6 +75,15 @@ private:
         return *reinterpret_cast <int *> (&u);
     }
 
+    inline unsigned long int u (long int l) const
+    {
+        return *reinterpret_cast <unsigned long int *> (&l);
+    }
+
+    inline long int l (unsigned long int u) const
+    {
+        return *reinterpret_cast <long int *> (&u);
+    }
 };
 
 #endif // TSPINBOX64_H
