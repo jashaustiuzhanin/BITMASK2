@@ -51,6 +51,10 @@ private:
 
     TFileState CfgFileState;
 
+    bool OpenCfgFile (QString FileName);
+    bool SaveCfgFile (QString FileName);
+
+
 private slots:
     void ShowValue ();
 

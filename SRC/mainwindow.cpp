@@ -174,6 +174,7 @@ MainWindow :: MainWindow (QWidget *parent) :
     int h = fm.height() + 2;
     ui->tblBitmask->verticalHeader()->setDefaultSectionSize (h);
     ui->tblBitmask->setMinimumHeight (h*32 + ui->tblBitmask->horizontalHeader()->height()+4);
+    ui->tblBitmask->setSelectionMode (QAbstractItemView::NoSelection);
 
 
 //  QObject :: connect (ui->spnDecimal    , SIGNAL(valueChanged(int)), this, SLOT(SlotOnSpnDecimal    ()));
@@ -705,4 +706,385 @@ void MainWindow::on_actFILE_Quit_triggered()
 }
 /*------------------------------------------------------------------*/
 
+
+#include <QFileDialog>
+#include <QXmlStreamWriter>
+#include <QXmlStreamReader>
+#include <QXmlStreamAttribute>
+#include <QMessageBox>
+#include <QFile>
+
+
+/*------------------------------------------------------------------*/
+bool MainWindow :: OpenCfgFile (QString FileName)
+{
+    if ((FileName == "") || (FileName == 0) || (FileName == QString())) return false;
+
+    QFile file (FileName);
+    bool  tmp_result;
+
+    /* открытие читаемого XML-файла */
+    tmp_result = file.open (QFile::ReadOnly | QFile::Text);
+
+    if (!tmp_result)
+    {
+        QMessageBox::warning (0,
+                              "Ошибка файла",
+                              "Не удалось открыть файл",
+                              QMessageBox::Ok);
+        return false;
+    }
+
+    /* Создаётся объект, с помощью которого осуществляется чтение из файла */
+    QXmlStreamReader xml_reader;
+    xml_reader.setDevice (&file);
+    xml_reader.readNext ();   // Переход к первому элементу в файле
+
+    /* Цикл до тех пор, пока не будет достигнут конец документа */
+    while (!xml_reader.atEnd ())
+    {
+#ifdef __DELETED_FRAGMENT__
+        /* Проверка, является ли данный элемент началом тега */
+        if (xml_reader.isStartElement ())
+        {
+            bool already_found = true;
+
+            // Считывается тег первого элемента
+            if (xml_reader.name () == "BitmaskParams")
+            {
+            }
+
+            // Считывается тег с именем файла, содержащего отчёт
+            else if (xml_reader.name () == "ReportFilePath")
+            {
+                // считываются все атрибуты и перебираются для выделения тех, которые нужны
+                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
+                {
+                    // получение значений, когда найдены нужные атрибуты
+                    if (attr.name().toString() == "value") {ReportFilePath = (attr.value().toString ());}
+                }
+            }
+            // Считывается тег с названием организации
+            else if (xml_reader.name () == "OrganizationName")
+            {
+                // считываются все атрибуты и перебираются для выделения тех, которые нужны
+                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
+                {
+                    // получение значений, когда найдены нужные атрибуты
+                    if (attr.name().toString() == "value") {OrganizationName = (attr.value().toString ());}
+                }
+            }
+            // Считывается тег с именем файла, содержащего логотип
+            else if (xml_reader.name () == "LogoImagePath")
+            {
+                // считываются все атрибуты и перебираются для выделения тех, которые нужны
+                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
+                {
+                    // получение значений, когда найдены нужные атрибуты
+                    if (attr.name().toString() == "value") {LogoImagePath = (attr.value().toString ());}
+                }
+            }
+            // Считывается тег с Названием документа отчёта
+            else if (xml_reader.name () == "Title1")
+            {
+                // считываются все атрибуты и перебираются для выделения тех, которые нужны
+                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
+                {
+                    // получение значений, когда найдены нужные атрибуты
+                    if (attr.name().toString() == "value") {Title1 = (attr.value().toString ());}
+                }
+            }
+            // Считывается тег с дополнительным заголовком
+            else if (xml_reader.name () == "Title2")
+            {
+                // считываются все атрибуты и перебираются для выделения тех, которые нужны
+                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
+                {
+                    // получение значений, когда найдены нужные атрибуты
+                    if (attr.name().toString() == "value") {Title2 = (attr.value().toString ());}
+                }
+            }
+            // Считывается тег с Надписью над таблицей
+            else if (xml_reader.name () == "TableOverHat")
+            {
+                // считываются все атрибуты и перебираются для выделения тех, которые нужны
+                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
+                {
+                    // получение значений, когда найдены нужные атрибуты
+                    if (attr.name().toString() == "value") {TableOverHat = (attr.value().toString ());}
+                }
+            }
+
+            // Считывается тег со значением поля Шахта, скважина, глубина и т.д.
+            else if (xml_reader.name () == "Shachta")
+            {
+                // считываются все атрибуты и перебираются для выделения тех, которые нужны
+                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
+                {
+                    // получение значений, когда найдены нужные атрибуты
+                    if (attr.name().toString() == "value") {Shachta = (attr.value().toString ());}
+                }
+            }
+
+
+            // Считывается тег со значением поля Подпись 1
+            else if (xml_reader.name () == "Podpis1")
+            {
+                // считываются все атрибуты и перебираются для выделения тех, которые нужны
+                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
+                {
+                    // получение значений, когда найдены нужные атрибуты
+                    if (attr.name().toString() == "value") {Podpis1 = (attr.value().toString ());}
+                }
+            }
+            // Считывается тег со значением поля Подпись 2
+            else if (xml_reader.name () == "Podpis2")
+            {
+                // считываются все атрибуты и перебираются для выделения тех, которые нужны
+                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
+                {
+                    // получение значений, когда найдены нужные атрибуты
+                    if (attr.name().toString() == "value") {Podpis2 = (attr.value().toString ());}
+                }
+            }
+            // Считывается тег со значением поля Подпись 3
+            else if (xml_reader.name () == "Podpis3")
+            {
+                // считываются все атрибуты и перебираются для выделения тех, которые нужны
+                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
+                {
+                    // получение значений, когда найдены нужные атрибуты
+                    if (attr.name().toString() == "value") {Podpis3 = (attr.value().toString ());}
+                }
+            }
+            // Считывается тег со значением поля Телефон 1
+            else if (xml_reader.name () == "Tel1")
+            {
+                // считываются все атрибуты и перебираются для выделения тех, которые нужны
+                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
+                {
+                    // получение значений, когда найдены нужные атрибуты
+                    if (attr.name().toString() == "value") {Tel1 = (attr.value().toString ());}
+                }
+            }
+            // Считывается тег со значением поля Телефон 2
+            else if (xml_reader.name () == "Tel2")
+            {
+                // считываются все атрибуты и перебираются для выделения тех, которые нужны
+                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
+                {
+                    // получение значений, когда найдены нужные атрибуты
+                    if (attr.name().toString() == "value") {Tel2 = (attr.value().toString ());}
+                }
+            }
+            // Считывается тег со значением поля EMail
+            else if (xml_reader.name () == "EMail")
+            {
+                // считываются все атрибуты и перебираются для выделения тех, которые нужны
+                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
+                {
+                    // получение значений, когда найдены нужные атрибуты
+                    if (attr.name().toString() == "value") {EMail = (attr.value().toString ());}
+                }
+            }
+            // Считывается тег со значением поля Site
+            else if (xml_reader.name () == "Site")
+            {
+                // считываются все атрибуты и перебираются для выделения тех, которые нужны
+                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
+                {
+                    // получение значений, когда найдены нужные атрибуты
+                    if (attr.name().toString() == "value") {Site = (attr.value().toString ());}
+                }
+            }
+
+
+        }
+#endif /*__DELETED_FRAGMENT__*/
+
+        xml_reader.readNext (); // Переход к следующему элементу XML-файла
+    }
+
+    file.close (); // Закрытие файла
+
+    return true;
+}
+
+
+#ifdef __DELETED_FRAGMENT__
+    /* Цикл до тех пор, пока не будет достигнут конец документа */
+    while (!xmlReader.atEnd ())
+    {
+        /* Проверка, является ли данный элемент началом тега */
+        if (xmlReader.isStartElement ())
+        {
+//          bool already_found = false;
+
+            // Найден тег начала данных, содержащих задаваемые параметры для расчёта
+            if (CalcParams && (xmlReader.name () == "CalcParams"))
+            {
+                // считываются задаваемые параметры для расчёта
+                tmp_result = ReadFromXML_CalcParams     (&xmlReader);
+                if (!tmp_result) {file.close (); return false;}
+            }
+
+            // Найден тег начала данных, содержащих данные эксперимента
+            else if (ExperimentData && (xmlReader.name () == "ExperimentData"))
+            {
+                // считываются данные эксперимента
+                tmp_result = ReadFromXML_ExperimentData (&xmlReader);
+                if (!tmp_result) {file.close (); return false;}
+            }
+
+            // Найден тег начала данных, содержащих параметры, выбираемые пользователем для обработки методом 1 (корень квадратный из времени)
+            else if (UserChoice && (xmlReader.name () == "UserChoice_Method1"))
+            {
+                // считываются параметры, выбираемые пользователем
+                tmp_result = ReadFromXML_UserChoice_Method1    (&xmlReader);
+                if (!tmp_result) {file.close (); return false;}
+            }
+
+            // Найден тег начала данных, содержащих параметры, выбираемые пользователем для обработки методом 2 (логарифм из времени)
+            else if (UserChoice && (xmlReader.name () == "UserChoice_Method2"))
+            {
+                // считываются параметры, выбираемые пользователем
+                tmp_result = ReadFromXML_UserChoice_Method2    (&xmlReader);
+                if (!tmp_result) {file.close (); return false;}
+            }
+
+            // Найден тег начала данных, содержащих результаты расчётов обработки методом 1 (корень квадратный из времени)
+            else if (CalcResults && (xmlReader.name () == "CalcResults_Method1"))
+            {
+                // считываются результаты расчётов
+                tmp_result = ReadFromXML_CalcResults_Method1    (&xmlReader);
+                if (!tmp_result) {file.close (); return false;}
+            }
+
+            // Найден тег начала данных, содержащих результаты расчётов обработки методом методом 2 (логарифм из времени)
+            else if (CalcResults && (xmlReader.name () == "CalcResults_Method2"))
+            {
+                // считываются результаты расчётов
+                tmp_result = ReadFromXML_CalcResults_Method2    (&xmlReader);
+                if (!tmp_result) {file.close (); return false;}
+            }
+
+            // Найден тег начала данных, содержащих внутренние рассчитываемые данные
+            else if (InternalCalcData && (xmlReader.name () == "InternalCalcData"))
+            {
+                // считываются результаты расчётов
+                tmp_result = ReadFromXML_InternalCalcData    (&xmlReader);
+                if (!tmp_result) {file.close (); return false;}
+            }
+
+        } // end if isStartElement
+
+        xmlReader.readNext (); // Переход к следующему элементу XML-файла
+    }
+
+
+    file.close (); // Закрытие файла
+/*
+            bool already_found = false;
+                already_found = true;
+
+
+    xmlWriter.writeStartElement  ("ConsProcData");  // Записывается первый элемент с его именем
+    xmlWriter.writeAttribute     ("CalcParams"    , (CalcParams     ? "true" : "false"));
+    xmlWriter.writeAttribute     ("ExperimentData", (ExperimentData ? "true" : "false"));
+    xmlWriter.writeAttribute     ("UserChoice"    , (UserChoice     ? "true" : "false"));
+    xmlWriter.writeAttribute     ("CalcResults"   , (CalcResults    ? "true" : "false"));
+*/
+    return true;
+}
+
+
+
+#endif /*__DELETED_FRAGMENT__*/
+
+/*------------------------------------------------------------------*/
+bool MainWindow :: SaveCfgFile (QString FileName)
+{
+    if ((FileName == "") || (FileName == 0) || (FileName == QString())) return false;
+
+    /* Открываем файл для Записи с помощью пути, указанного в filename */
+    QFile file (FileName);
+    file.open (QIODevice::WriteOnly);
+
+#ifdef __DELETED_FRAGMENT__
+    /* Создаем объект, с помощью которого осуществляется запись в файл XML */
+    QXmlStreamWriter xmlWriter   (&file);
+    xmlWriter.setAutoFormatting  (true);  // Устанавливается автоформатирование текста
+    xmlWriter.writeStartDocument ();      // Запускается запись в документ
+    xmlWriter.writeStartElement  ("ReportParams");   // Записывается первый элемент с его именем
+
+    // записываем имена и значения параметров в виде тегов и их атрибутов
+
+    xmlWriter.writeStartElement ("ReportFilePath");   // Записывается тег с именем файла, содержащего отчёт
+    xmlWriter.writeAttribute    ("value", ReportFilePath);
+    xmlWriter.writeEndElement   ();                   // Тег закрывается
+
+    xmlWriter.writeStartElement ("OrganizationName"); // Записывается тег с названием организации
+    xmlWriter.writeAttribute    ("value", OrganizationName);
+    xmlWriter.writeEndElement   ();                   // Тег закрывается
+
+    xmlWriter.writeStartElement ("LogoImagePath");    // Записывается тег с именем файла, содержащего логотип
+    xmlWriter.writeAttribute    ("value", LogoImagePath);
+    xmlWriter.writeEndElement   ();                   // Тег закрывается
+
+    xmlWriter.writeStartElement ("Title1");           // Записывается тег с Названием документа отчёта
+    xmlWriter.writeAttribute    ("value", Title1);
+    xmlWriter.writeEndElement   ();                   // Тег закрывается
+
+    xmlWriter.writeStartElement ("Title2");           // Записывается тег с дополнительным заголовком
+    xmlWriter.writeAttribute    ("value", Title2);
+    xmlWriter.writeEndElement   ();                   // Тег закрывается
+
+    xmlWriter.writeStartElement ("TableOverHat");     // Записывается тег с Надписью над таблицей
+    xmlWriter.writeAttribute    ("value", TableOverHat);
+    xmlWriter.writeEndElement   ();                   // Тег закрывается
+
+
+    xmlWriter.writeStartElement ("Shachta");          // Записывается тег со значением поля Шахта, скважина, глубина и т.д.
+    xmlWriter.writeAttribute    ("value", Shachta);
+    xmlWriter.writeEndElement   ();                   // Тег закрывается
+
+
+    xmlWriter.writeStartElement ("Podpis1");          // Записывается тег со значением поля Подпись 1
+    xmlWriter.writeAttribute    ("value", Podpis1);
+    xmlWriter.writeEndElement   ();                   // Тег закрывается
+
+    xmlWriter.writeStartElement ("Podpis2");          // Записывается тег со значением поля Подпись 2
+    xmlWriter.writeAttribute    ("value", Podpis2);
+    xmlWriter.writeEndElement   ();                   // Тег закрывается
+
+    xmlWriter.writeStartElement ("Podpis3");          // Записывается тег со значением поля Подпись 3
+    xmlWriter.writeAttribute    ("value", Podpis3);
+    xmlWriter.writeEndElement   ();                   // Тег закрывается
+
+    xmlWriter.writeStartElement ("Tel1");             // Записывается тег со значением поля Телефон 1
+    xmlWriter.writeAttribute    ("value", Tel1);
+    xmlWriter.writeEndElement   ();                   // Тег закрывается
+
+    xmlWriter.writeStartElement ("Tel2");             // Записывается тег со значением поля Телефон 2
+    xmlWriter.writeAttribute    ("value", Tel2);
+    xmlWriter.writeEndElement   ();                   // Тег закрывается
+
+    xmlWriter.writeStartElement ("EMail");            // Записывается тег со значением поля EMail
+    xmlWriter.writeAttribute    ("value", EMail);
+    xmlWriter.writeEndElement   ();                   // Тег закрывается
+
+    xmlWriter.writeStartElement ("Site");             // Записывается тег со значением поля Site
+    xmlWriter.writeAttribute    ("value", Site);
+    xmlWriter.writeEndElement   ();                   // Тег закрывается
+
+
+    /* Закрывается тег первого элемента */
+    xmlWriter.writeEndElement ();
+    /* Завершается запись в алемент */
+    xmlWriter.writeEndDocument ();
+#endif /*__DELETED_FRAGMENT__*/
+
+    file.close ();   // Закрывается файл
+}
+/*------------------------------------------------------------------*/
 
