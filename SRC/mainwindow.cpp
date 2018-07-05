@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "dlgmaskdatastyle.h"
 
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
@@ -13,14 +14,26 @@ int     HexSpinbox::valueFromText (const QString &text) const
 */
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
-MainWindow::MainWindow(QWidget *parent) :
+MainWindow :: MainWindow (QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
 
-    ui->spnDecimal    ->setMaximum (0x1FFFFFFF);
+    setWindowTitle ("BitMask 2.0");
+    setWindowIcon  (QIcon (":/PICS/bitmask20.png"));
+
+    ui->grpDEC_HEX_BIN->setVisible (true );
+    ui->grp32_bits    ->setVisible (true );
+    ui->grpBitmask    ->setVisible (false);
+
+    ui->spnDecimal    ->SetMode (BMQSpinBox::modeDECIMAL    );
+    ui->spnDecimal    ->SetBitsCount_32 ();
+    ui->spnHexadecimal->SetMode (BMQSpinBox::modeHEXADECIMAL);
     ui->spnHexadecimal->SetBitsCount_32 ();
+    ui->spnBinary     ->SetMode (BMQSpinBox::modeBINARY     );
+    ui->spnBinary     ->SetBitsCount_32 ();
+
     ui->spnByte0_HexRight->SetBitsCount_04 ();
     ui->spnByte0_HexLeft ->SetBitsCount_04 ();
     ui->spnByte1_HexRight->SetBitsCount_04 ();
@@ -30,12 +43,193 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->spnByte3_HexRight->SetBitsCount_04 ();
     ui->spnByte3_HexLeft ->SetBitsCount_04 ();
 
+    ui->spnByte0_HexRight->SetMode (BMQSpinBox::modeHEXADECIMAL);
+    ui->spnByte0_HexLeft ->SetMode (BMQSpinBox::modeHEXADECIMAL);
+    ui->spnByte1_HexRight->SetMode (BMQSpinBox::modeHEXADECIMAL);
+    ui->spnByte1_HexLeft ->SetMode (BMQSpinBox::modeHEXADECIMAL);
+    ui->spnByte2_HexRight->SetMode (BMQSpinBox::modeHEXADECIMAL);
+    ui->spnByte2_HexLeft ->SetMode (BMQSpinBox::modeHEXADECIMAL);
+    ui->spnByte3_HexRight->SetMode (BMQSpinBox::modeHEXADECIMAL);
+    ui->spnByte3_HexLeft ->SetMode (BMQSpinBox::modeHEXADECIMAL);
+
     ShowInProcessFlag = false;
     Value = 0;
     ShowValue ();
 
-    QObject :: connect (ui->spnDecimal    , SIGNAL(valueChanged(int)), this, SLOT(SlotOnSpnDecimal    ()));
-    QObject :: connect (ui->spnHexadecimal, SIGNAL(valueChanged(   )), this, SLOT(SlotOnSpnHexadecimal()));
+    CfgFileState = filestateNOT_OPENED_NO_CHANGES;
+
+    QStringList headers_colors;
+    QStringList headers;
+    headers << "0-col";
+    headers << "1-col";
+    headers << "bit";
+    headers << "state";
+    headers << "name";
+    ui->tblBitmask->setColumnCount ( 5); // Указываем число колонок
+//  ui->tblBitmask->setRowCount    (32); // Указываем число колонок
+    ui->tblBitmask->setShowGrid(true); // Включаем сетку
+    // Разрешаем выделение только одного элемента
+    ui->tblBitmask->setSelectionMode(QAbstractItemView::SingleSelection);
+    // Разрешаем выделение построчно
+    ui->tblBitmask->setSelectionBehavior(QAbstractItemView::SelectRows);
+    // Устанавливаем заголовки колонок
+    ui->tblBitmask->setHorizontalHeaderLabels(headers);
+    // Растягиваем последнюю колонку на всё доступное пространство
+    ui->tblBitmask->horizontalHeader()->setStretchLastSection(true);
+    // Скрываем колонку под номером 0
+//  ui->tblBitmask->hideColumn(0);
+    // скрываем вертикальный заголовок
+    ui->tblBitmask->verticalHeader()->setHidden (true);
+    // делаем первые два столбца минимальной ширины
+    ui->tblBitmask->horizontalHeader()->resizeSection (0, 40);
+    ui->tblBitmask->horizontalHeader()->resizeSection (1, 40);
+
+    // инициализация цветов отображения битовых масок значениями по умолчанию
+    for (int i = 0; i<32; i++)
+    {
+        MaskDataOfBit[i].BackColorState0 = Qt::gray;
+        MaskDataOfBit[i].TextColorState0 = Qt::black;
+        MaskDataOfBit[i].BackColorState1 = Qt::darkBlue;
+        MaskDataOfBit[i].TextColorState1 = Qt::white;
+    }
+
+    /* Выполняем заполнение QTableWidget записями с помощью цикла */
+    for (int i = 0; i<32; i++)
+    {
+        // Вставляем строку
+        ui->tblBitmask->insertRow(i);
+        // заполняем колонку с номером бита
+        ui->tblBitmask->setItem (i, 2, new QTableWidgetItem (QString::number(i)));
+
+#ifdef __DELETED_FRAGMENT__
+        // Создаём элемент, который будет выполнять роль чекбокса
+        QTableWidgetItem *item = new QTableWidgetItem ();
+        item->data (Qt::CheckStateRole);
+       /* Проверяем, на статус нечетности, если нечетное устройство, то
+        * выставляем состояние чекбокса в Checked, иначе в Unchecked
+       if(query.value(1).toInt() == 1){
+           item->setCheckState(Qt::Checked);
+       } else {
+           item->setCheckState(Qt::Unchecked);
+       }
+        * */
+        item->setCheckState(Qt::Unchecked);
+        // Устанавливаем чекбокс в нужную колонку
+        ui->tblBitmask->setItem (i, 3, item);
+/*
+       // Далее забираем все данные из результата запроса и устанавливаем в остальные поля
+       ui->tblBitmask->setItem(i,2, new QTableWidgetItem(query.value(2).toString()));
+       ui->tblBitmask->setItem(i,3, new QTableWidgetItem(query.value(3).toString()));
+       ui->tblBitmask->setItem(i,4, new QTableWidgetItem(query.value(4).toString()));
+*/
+#endif /*__DELETED_FRAGMENT__*/
+        // Создаём виджет, который будет содержать в себе чекбокс
+        QWidget * checkbox_widget = new QWidget ();
+        QCheckBox *checkbox = new QCheckBox ();      // объявляем и инициализируем чекбокс
+        QHBoxLayout *layout_checkbox = new QHBoxLayout (checkbox_widget); // создаём слой с привязкой к виджету
+        layout_checkbox->addWidget (checkbox);            // Устанавливаем чекбокс в слой
+        layout_checkbox->setAlignment (Qt::AlignCenter);  // Отцентровываем чекбокс
+        layout_checkbox->setContentsMargins (0,0,0,0);    // Устанавливаем нулевые отступы
+#ifdef __DELETED_FRAGMENT__
+        /* Проверяем, на статус нечетности, если нечетное устройство, то
+         * выставляем состояние чекбокса в Checked, иначе в Unchecked
+        if(query.value(1).toInt() == 1){
+            checkBox->setChecked(true);
+        } else {
+            checkBox->setChecked(false);
+        }
+        * */
+#endif /*__DELETED_FRAGMENT__*/
+        checkbox->setChecked (false);
+
+        QObject::connect (checkbox, SIGNAL(clicked()), this, SLOT(SlotOnBitmaskChkBox()));
+
+        // Устанавливаем чекбокс в третью колонку (при счете с 0)
+        ui->tblBitmask->setCellWidget (i, 3, checkbox_widget);
+
+        QTableWidgetItem *p_item0;
+        QTableWidgetItem *p_item1;
+        QTableWidgetItem *p_item4;
+        p_item0 = new QTableWidgetItem (QString("*"));
+        p_item0->setBackground (QBrush(MaskDataOfBit[i].BackColorState0));
+        p_item0->setForeground (QBrush(MaskDataOfBit[i].TextColorState0));
+        ui->tblBitmask->setItem (i, 0, p_item0);
+        p_item1 = new QTableWidgetItem (QString("*"));
+        p_item1->setBackground (QBrush(MaskDataOfBit[i].BackColorState1));
+        p_item1->setForeground (QBrush(MaskDataOfBit[i].TextColorState1));
+        ui->tblBitmask->setItem (i, 1, p_item1);
+        p_item4 = new QTableWidgetItem (QString(""));
+        ui->tblBitmask->setItem (i, 4, p_item4);
+    }
+ 
+    // Ресайзим колонки по содержимому
+    ui->tblBitmask->resizeColumnsToContents();
+
+    // делаем таблицу Bitmask непрокручиваемой
+    ui->tblBitmask->setVerticalScrollBarPolicy (Qt::ScrollBarAlwaysOff);
+    QFont font = ui->tblBitmask->font ();
+    font.setPointSize (8);
+    ui->tblBitmask->setFont (font);
+    QFontMetrics fm (ui->tblBitmask->font());
+    int h = fm.height() + 2;
+    ui->tblBitmask->verticalHeader()->setDefaultSectionSize (h);
+    ui->tblBitmask->setMinimumHeight (h*32 + ui->tblBitmask->horizontalHeader()->height()+4);
+
+
+//  QObject :: connect (ui->spnDecimal    , SIGNAL(valueChanged(int)), this, SLOT(SlotOnSpnDecimal    ()));
+//  QObject :: connect (ui->spnHexadecimal, SIGNAL(valueChanged(   )), this, SLOT(SlotOnSpnHexadecimal()));
+//  QObject :: connect (ui->spnHexadecimal, SIGNAL(SignalIsNewValueSource(BMQSpinBox::TValue)), this, SLOT(SlotOnSpnHexadecimal()));
+    QObject :: connect (ui->spnDecimal    , SIGNAL(SignalIsNewValueSource()), this, SLOT(SlotOnSpnDecimal    ()));
+    QObject :: connect (ui->spnHexadecimal, SIGNAL(SignalIsNewValueSource()), this, SLOT(SlotOnSpnHexadecimal()));
+    QObject :: connect (ui->spnBinary     , SIGNAL(SignalIsNewValueSource()), this, SLOT(SlotOnSpnBinary     ()));
+
+    QObject :: connect (ui->spnByte0_HexRight, SIGNAL(SignalIsNewValueSource()), this, SLOT(SlotOn32bitSpnBox()));
+    QObject :: connect (ui->spnByte0_HexLeft , SIGNAL(SignalIsNewValueSource()), this, SLOT(SlotOn32bitSpnBox()));
+    QObject :: connect (ui->spnByte1_HexRight, SIGNAL(SignalIsNewValueSource()), this, SLOT(SlotOn32bitSpnBox()));
+    QObject :: connect (ui->spnByte1_HexLeft , SIGNAL(SignalIsNewValueSource()), this, SLOT(SlotOn32bitSpnBox()));
+    QObject :: connect (ui->spnByte2_HexRight, SIGNAL(SignalIsNewValueSource()), this, SLOT(SlotOn32bitSpnBox()));
+    QObject :: connect (ui->spnByte2_HexLeft , SIGNAL(SignalIsNewValueSource()), this, SLOT(SlotOn32bitSpnBox()));
+    QObject :: connect (ui->spnByte3_HexRight, SIGNAL(SignalIsNewValueSource()), this, SLOT(SlotOn32bitSpnBox()));
+    QObject :: connect (ui->spnByte3_HexLeft , SIGNAL(SignalIsNewValueSource()), this, SLOT(SlotOn32bitSpnBox()));
+
+    QObject :: connect (ui->chkByte0_00, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte0_01, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte0_02, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte0_03, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte0_04, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte0_05, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte0_06, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte0_07, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte1_08, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte1_09, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte1_10, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte1_11, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte1_12, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte1_13, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte1_14, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte1_15, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte2_16, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte2_17, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte2_18, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte2_19, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte2_20, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte2_21, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte2_22, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte2_23, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte3_24, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte3_25, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte3_26, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte3_27, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte3_28, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte3_29, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte3_30, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+    QObject :: connect (ui->chkByte3_31, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
+
+    QObject :: connect (ui->tblBitmask, SIGNAL(cellClicked(int,int)), this, SLOT(SlotOnBitmaskClicked(int,int)));
+
+    adjustSize ();
+
+    SlotMenuEnableDisable ();
 }
 
 /*------------------------------------------------------------------*/
@@ -49,14 +243,207 @@ MainWindow::~MainWindow()
 /*------------------------------------------------------------------*/
 void MainWindow :: SlotOnSpnDecimal ()
 {
-    Value = ui->spnDecimal->value ();
+//  Value = ui->spnDecimal->value ();
+    Value = (unsigned long int) ui->spnDecimal->value ();
     ShowValue ();
 }
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
 void MainWindow :: SlotOnSpnHexadecimal ()
 {
-    Value = ui->spnHexadecimal->value ();
+    Value = (unsigned long int) ui->spnHexadecimal->value ();
+    ShowValue ();
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow :: SlotOnSpnBinary ()
+{
+    Value = (unsigned long int) ui->spnBinary->value ();
+    ShowValue ();
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow :: SlotOn32bitSpnBox ()
+{
+    int value = 0;
+    value = value | ui->spnByte3_HexLeft ->value ();
+    value = value << 4;
+    value = value | ui->spnByte3_HexRight->value ();
+    value = value << 4;
+    value = value | ui->spnByte2_HexLeft ->value ();
+    value = value << 4;
+    value = value | ui->spnByte2_HexRight->value ();
+    value = value << 4;
+    value = value | ui->spnByte1_HexLeft ->value ();
+    value = value << 4;
+    value = value | ui->spnByte1_HexRight->value ();
+    value = value << 4;
+    value = value | ui->spnByte0_HexLeft ->value ();
+    value = value << 4;
+    value = value | ui->spnByte0_HexRight->value ();
+
+    Value = value;
+    ShowValue ();
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow :: SlotOn32bitChkBox ()
+{
+    int value = 0;
+    value = value | (ui->chkByte3_31->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte3_30->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte3_29->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte3_28->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte3_27->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte3_26->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte3_25->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte3_24->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte2_23->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte2_22->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte2_21->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte2_20->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte2_19->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte2_18->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte2_17->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte2_16->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte1_15->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte1_14->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte1_13->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte1_12->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte1_11->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte1_10->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte1_09->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte1_08->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte0_07->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte0_06->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte0_05->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte0_04->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte0_03->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte0_02->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte0_01->isChecked () ? 0x00000001 : 0x00000000);
+    value = value << 1;
+    value = value | (ui->chkByte0_00->isChecked () ? 0x00000001 : 0x00000000);
+
+    Value = value;
+    ShowValue ();
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow :: SlotOnBitmaskClicked (int Row, int Column)
+{
+    qDebug () << "----- 1 ----- : row=" << Row << ", Column=" << Column;
+
+    // если клик был произведён на столбце с выбором цвета для состояния 0,
+    // то производим выбор цвета
+    if (Column == 0)
+    {
+/*
+        QColor color = QColorDialog::getColor (MaskDataOfBit[Row].BackColorState0, this);
+        MaskDataOfBit[Row].BackColorState0 = color;
+        ShowValue ();
+*/
+        DlgMaskDataStyle *p_dlg = new DlgMaskDataStyle (this);
+        int dlg_result;
+        p_dlg->SetData (Row, MaskDataOfBit[Row]);
+        dlg_result = p_dlg->exec ();
+        if (dlg_result == QDialog::Accepted) MaskDataOfBit[Row] = p_dlg->GetData ();
+        ShowValue ();
+    }
+    // если клик был произведён на столбце с выбором цвета для состояния 1,
+    // то производим выбор цвета
+    else if (Column == 1)
+    {
+/*
+        QColor color = QColorDialog::getColor (MaskDataOfBit[Row].BackColorState0, this);
+        MaskDataOfBit[Row].BackColorState0 = color;
+*/
+        DlgMaskDataStyle *p_dlg = new DlgMaskDataStyle (this);
+        int dlg_result;
+        p_dlg->SetData (Row, MaskDataOfBit[Row]);
+        dlg_result = p_dlg->exec ();
+        if (dlg_result == QDialog::Accepted) MaskDataOfBit[Row] = p_dlg->GetData ();
+        ShowValue ();
+    }
+
+    // если клик был произведён в столбце tblBitmask с checkbox-ами,
+    // то, значит, значение Value нужно пересчитать
+    else if (Column == 3)
+    {
+/*
+        QTableWidgetItem *p_clicked_item = ui->tblBitmask->item (Row, 3);
+qDebug () << "----- 2 ----- : check state" << p_clicked_item->checkState();
+        if (p_clicked_item->checkState() == Qt::Checked) p_clicked_item->setCheckState (Qt::Unchecked);
+        else                                             p_clicked_item->setCheckState (Qt::Checked  );
+qDebug () << "----- 3 ----- : check state" << p_clicked_item->checkState();
+
+        int value = 0;
+
+        // show status of checkboxes in Bitmask group
+        for (int i=31; i>=0; i--)
+        {
+            QTableWidgetItem *p_item = ui->tblBitmask->item (i, 3);
+            if (!p_item) continue;
+
+qDebug () << "----- 4 ----- : i=" << i << ", check state" << p_item->checkState();
+
+            value = value | ((p_item->checkState() == Qt::Checked) ? 0x00000001 : 0x00000000);
+            if (i>0) value = value << 1;
+        }
+
+        Value = value;
+        ShowValue ();
+*/
+    }
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow :: SlotOnBitmaskChkBox ()
+{
+    int value = 0;
+
+    // show status of checkboxes in Bitmask group
+    for (int i=31; i>=0; i--)
+    {
+        // Забираем виджет из ячейки
+        QWidget *item = ui->tblBitmask->cellWidget (i, 3);
+        // Забираем виджет из слоя и кастуем его в QCheckBox
+        QCheckBox *checkbox = qobject_cast <QCheckBox*> (item->layout()->itemAt(0)->widget());
+
+        value = value | ((checkbox->isChecked()) ? 0x00000001 : 0x00000000);
+        if (i>0) value = value << 1;
+    }
+
+    Value = value;
     ShowValue ();
 }
 /*------------------------------------------------------------------*/
@@ -74,13 +461,10 @@ void MainWindow :: ShowValue ()
     ui->spnDecimal->setValue (Value);
 
     // fill hexadecimal view
-    tmp_str = QString::number (Value, 16).toUpper();
-//  ui->edtHexadecimal->setText (tmp_str);
     ui->spnHexadecimal->setValue (Value);
 
     // fill binary view
-    tmp_str = QString::number (Value, 2 ).toUpper();
-    ui->edtBinary->setText (tmp_str);
+    ui->spnBinary->setValue (Value);
 
     // fill byte 0 bit-elements
     tmp_byte = (Value & 0x000000ff) >> 0;
@@ -123,23 +507,202 @@ void MainWindow :: ShowValue ()
     ui->chkByte3_30->setChecked (tmp_byte & 0x40);
     ui->chkByte3_31->setChecked (tmp_byte & 0x80);
 
-/*
     // fill byte 0 hexchar-elements
-    tmp_byte = (Value & 0x0000000f) >> 0;
-    tmp_str = QString::number (tmp_byte, 16).toUpper();
-    ui->spnByte0_HexRight->setValue (tmp_str);
-    tmp_byte = (Value & 0x000000f0) >> 4;
-    tmp_str = QString::number (tmp_byte, 16).toUpper();
-    ui->spnByte0_HexLeft->setValue (tmp_str);
-*/
-    // fill byte 0 hexchar-elements
-    tmp_byte = (Value & 0x0000000f) >> 0;
+    tmp_byte = (Value & 0x0000000f) >>  0;
     ui->spnByte0_HexRight->setValue (tmp_byte);
-    tmp_byte = (Value & 0x000000f0) >> 4;
+    tmp_byte = (Value & 0x000000f0) >>  4;
     ui->spnByte0_HexLeft ->setValue (tmp_byte);
+    tmp_byte = (Value & 0x00000f00) >>  8;
+    ui->spnByte1_HexRight->setValue (tmp_byte);
+    tmp_byte = (Value & 0x0000f000) >> 12;
+    ui->spnByte1_HexLeft ->setValue (tmp_byte);
+    tmp_byte = (Value & 0x000f0000) >> 16;
+    ui->spnByte2_HexRight->setValue (tmp_byte);
+    tmp_byte = (Value & 0x00f00000) >> 20;
+    ui->spnByte2_HexLeft ->setValue (tmp_byte);
+    tmp_byte = (Value & 0x0f000000) >> 24;
+    ui->spnByte3_HexRight->setValue (tmp_byte);
+    tmp_byte = (Value & 0xf0000000) >> 28;
+    ui->spnByte3_HexLeft ->setValue (tmp_byte);
 
+    // show status of checkboxes in Bitmask group
+//  QCheckBox *p_checkbox;
+    int mask = 0x00000001;
+    for (int i=0; i<32; i++)
+    {
+        bool val_flag = (Value & mask) ? true : false;
+        mask = mask << 1;
+
+#ifdef __DELETED_FRAGMENT__
+//      p_checkbox = qobject_cast <QCheckBox *> (ui->tblBitmask->cellWidget (i, 3));
+//      if (!p_checkbox) continue;
+//      p_checkbox->setChecked (val_flag);
+
+        QTableWidgetItem *p_item = ui->tblBitmask->item (i, 3);
+        if (!p_item) continue;
+        p_item->setCheckState (val_flag ? Qt::Checked : Qt::Unchecked);
+#endif /*__DELETED_FRAGMENT__*/
+
+        // Забираем виджет из ячейки
+        QWidget *item = ui->tblBitmask->cellWidget (i, 3);
+        if (!item) continue;
+        // Забираем виджет из слоя и кастуем его в QCheckBox
+        QCheckBox *checkbox = qobject_cast <QCheckBox*> (item->layout()->itemAt(0)->widget());
+        if (!checkbox) continue;
+
+        checkbox->setChecked (val_flag);
+
+        // Раскраска ячейки с текстом маски в зависимости от состояния бита
+        QTableWidgetItem *item4 = ui->tblBitmask->item (i, 4);
+        if (!item4) continue;
+        if (val_flag) 
+        {
+            item4->setBackground (QBrush (MaskDataOfBit[i].BackColorState1));
+            item4->setForeground (QBrush (MaskDataOfBit[i].TextColorState1));
+        }
+        else
+        {
+            item4->setBackground (QBrush (MaskDataOfBit[i].BackColorState0));
+            item4->setForeground (QBrush (MaskDataOfBit[i].TextColorState0));
+        }
+
+        // Раскраска ячеек с выбранными цветами лля окрашивания
+        QTableWidgetItem *item0 = ui->tblBitmask->item (i, 0);
+        if (!item0) continue;
+        item0->setBackground (QBrush (MaskDataOfBit[i].BackColorState0));
+        item0->setForeground (QBrush (MaskDataOfBit[i].TextColorState0));
+        QTableWidgetItem *item1 = ui->tblBitmask->item (i, 1);
+        if (!item1) continue;
+        item1->setBackground (QBrush (MaskDataOfBit[i].BackColorState1));
+        item1->setForeground (QBrush (MaskDataOfBit[i].TextColorState1));
+
+    }
 
     // release checking for reentering
     ShowInProcessFlag = false;
 }
 /*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow :: SlotMenuEnableDisable ()
+{
+    ui->actFILE_Quit->setEnabled (true );
+
+    if      (CfgFileState == filestateNOT_OPENED_NO_CHANGES)
+    {
+        ui->actFILE_Open   ->setEnabled (true );
+        ui->actFILE_Save   ->setEnabled (false);
+        ui->actFILE_Save_As->setEnabled (false);
+    }
+    if      (CfgFileState == filestateNOT_OPENED_UNSAVED_CHANGES)
+    {
+        ui->actFILE_Open   ->setEnabled (true );
+        ui->actFILE_Save   ->setEnabled (false);
+        ui->actFILE_Save_As->setEnabled (true );
+    }
+    else if (CfgFileState == filestateOPENED_NO_CHANGES)
+    {
+        ui->actFILE_Open   ->setEnabled (true );
+        ui->actFILE_Save   ->setEnabled (false);
+        ui->actFILE_Save_As->setEnabled (true );
+    }
+    else if (CfgFileState == filestateOPENED_UNSAVED_CHANGES)
+    {
+        ui->actFILE_Open   ->setEnabled (true );
+        ui->actFILE_Save   ->setEnabled (true );
+        ui->actFILE_Save_As->setEnabled (true );
+    }
+
+    ui->actVIEW_DEC_HEX_BIN->setChecked (ui->grpDEC_HEX_BIN->isVisible ());
+    ui->actVIEW_32_bits    ->setChecked (ui->grp32_bits    ->isVisible ());
+    ui->actVIEW_Bitmask    ->setChecked (ui->grpBitmask    ->isVisible ());
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow :: on_actVIEW_DEC_HEX_BIN_triggered ()
+{
+    if (ui->grpDEC_HEX_BIN->isVisible()) ui->grpDEC_HEX_BIN->setVisible (false);
+    else                                 ui->grpDEC_HEX_BIN->setVisible (true );
+    adjustSize ();
+
+    // !!!ATT!!! temporary block for right working of adjustSize
+    bool temp = ui->tbrMainToolbar->isVisible();
+    ui->tbrMainToolbar->setVisible (!temp);
+    adjustSize ();
+    ui->tbrMainToolbar->setVisible ( temp);
+    adjustSize ();
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow :: on_actVIEW_32_bits_triggered ()
+{
+    if (ui->grp32_bits->isVisible()) ui->grp32_bits->setVisible (false);
+    else                             ui->grp32_bits->setVisible (true );
+    adjustSize ();
+
+    // !!!ATT!!! temporary block for right working of adjustSize
+    bool temp = ui->tbrMainToolbar->isVisible();
+    ui->tbrMainToolbar->setVisible (!temp);
+    adjustSize ();
+    ui->tbrMainToolbar->setVisible ( temp);
+    adjustSize ();
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow :: on_actVIEW_Bitmask_triggered ()
+{
+    if (ui->grpBitmask->isVisible()) ui->grpBitmask->setVisible (false);
+    else                             ui->grpBitmask->setVisible (true );
+    adjustSize ();
+
+    // !!!ATT!!! temporary block for right working of adjustSize
+    bool temp = ui->tbrMainToolbar->isVisible();
+    ui->tbrMainToolbar->setVisible (!temp);
+    adjustSize ();
+    ui->tbrMainToolbar->setVisible ( temp);
+    adjustSize ();
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow::on_actFILE_Open_triggered()
+{
+    CfgFileState = filestateOPENED_NO_CHANGES;
+    SlotMenuEnableDisable ();
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow::on_actFILE_Save_triggered()
+{
+    CfgFileState = filestateOPENED_NO_CHANGES;
+    SlotMenuEnableDisable ();
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow::on_actFILE_Save_As_triggered()
+{
+    CfgFileState = filestateOPENED_NO_CHANGES;
+    SlotMenuEnableDisable ();
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow::on_actVIEW_MainToolbar_triggered()
+{
+    if (ui->tbrMainToolbar->isVisible()) ui->tbrMainToolbar->setVisible (false);
+    else                                 ui->tbrMainToolbar->setVisible (true );
+    SlotMenuEnableDisable ();
+    adjustSize ();
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow::on_actFILE_Quit_triggered()
+{
+    if      (CfgFileState == filestateNOT_OPENED_UNSAVED_CHANGES)
+    {
+    }
+    else if (CfgFileState == filestateOPENED_UNSAVED_CHANGES)
+    {
+    }
+    else    close ();
+}
+/*------------------------------------------------------------------*/
+
+

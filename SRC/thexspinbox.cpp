@@ -1283,3 +1283,16 @@ public:
 
 #endif // QT_NO_SPINBOX
 #endif /*__DELETED_FRAGMENT__*/
+
+
+#include "thexspinbox.h"
+
+THexSpinBox :: THexSpinBox (QWidget *parent) : QAbstractSpinBox (parent)
+{
+        SetBitsCount_32 ();
+
+        QLineEdit *p_edit = this->lineEdit();
+        QObject::connect (p_edit, SIGNAL(textChanged(QString)), this, SLOT (SlotOnChanged()));
+}
+
+

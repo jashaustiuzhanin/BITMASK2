@@ -1,5 +1,5 @@
-#ifndef THEXSPINBOX_H
-#define THEXSPINBOX_H
+#ifndef BMQSPINBOX_H
+#define BMQSPINBOX_H
 
 #include <QtCore>
 #include <QObject>
@@ -14,26 +14,52 @@
 
 
 
-class THexSpinBox : public QAbstractSpinBox
+class BMQSpinBox : public QAbstractSpinBox
 {
 
 Q_OBJECT
 
 public:
-    explicit THexSpinBox (QWidget *parent = 0);
-   ~THexSpinBox () {}
 
-    unsigned long int hexValue() const
+    explicit BMQSpinBox (QWidget *parent = 0);
+   ~BMQSpinBox () {}
+
+    /// @enum DigitType: тип системы исчисления (10-чная, 16-ричная, двоичная)
+    typedef enum DigitType
     {
-//      return u ( value () );
+        modeDECIMAL     = 0,    ///< SpinBox использует десятичную систему представления чисел
+        modeHEXADECIMAL = 1,    ///< SpinBox использует шестнадцатиричную систему представления чисел
+        modeBINARY      = 2,    ///< SpinBox использует двоичную систему представления чисел
+        
+        modeStub = 0
+    }
+    TDigitType;
+
+    typedef unsigned long int TValue;
+
+
+    void SetMode (TDigitType argMode)
+    {
+        Mode = argMode;
+    }
+
+
+//  TValue value     () const       {TValue val = valueFromText (text()); return val;}
+//  void   setValue  (TValue value) {lineEdit()->setText (textFromValue (value));}
+    TValue value     () const       {return Value;}
+    bool   setValue  (TValue argValue);
+/*
+    TValue hexValue() const
+    {
         return value ();
     }
 
-    void setHexValue (unsigned long int value)
+    void setHexValue (TValue value)
     {
-//      setValue (i(value));
         setValue (value);
     }
+*/
+    void setRange (TValue Min, TValue Max) {RangeMin = Min; RangeMax = Max;}
 
     void SetBitsCount_32 ()
     {
@@ -59,49 +85,34 @@ public:
         SetBitRange ();
     }
 
-    unsigned long int value     () const                  {unsigned long int val = valueFromText (text()); return val;}
-    void              setValue  (unsigned long int value) {lineEdit()->setText (textFromValue (value));}
-
-    void setRange (long int Min, long int Max) {RangeMin = Min; RangeMax = Max;}
-
 protected:
-
-    QString textFromValue (unsigned long int value) const
+/*
+    QString textFromValue (TValue value) const
     {
-//      return QString::number(u(value), 16).toUpper();
         return QString::number(value, 16).toUpper();
     }
 
-    unsigned long int valueFromText (const QString &text) const
+    TValue valueFromText (const QString &text) const
     {
-//      return i(text.toUInt(0, 16));
         return (text.toULong (0, 16));
     }
+*/
+    QString textFromValue (TValue value) const;
+    TValue  valueFromText (const QString &text) const;
 
-    QValidator::State validate (QString &input, int &pos) const
-    {
-//      return QValidator::Acceptable;
-
-        QString copy (input);
-        if (copy.startsWith ("0x")) copy.remove(0, 2);
-        pos -= copy.size() - copy.trimmed().size();
-        copy = copy.trimmed();
-        if (copy.isEmpty()) return QValidator::Intermediate;
-
-//      input = QString("0x") + copy.toUpper();
-        input = copy.toUpper();
-        bool okay;
-        unsigned long int val = copy.toULong (&okay, 16);
-        if (!okay || (val < RangeMin) || (val > RangeMax))
-        {
-            return QValidator::Invalid;
-        }
-        return QValidator::Acceptable;
-    }
+    QValidator::State validate (QString &input, int &pos) const;
 
 private:
 
 //  bool m_only16Bits;
+
+    TDigitType Mode ;
+
+    TValue     Value   ;
+    TValue     RangeMin;
+    TValue     RangeMax;
+
+    int BitsCount;
 
     void SetBitRange ()
     {
@@ -112,30 +123,24 @@ private:
         else                      setRange (INT_MIN, INT_MAX);
     }
 
-/*
-    inline unsigned long int u (long int i) const
-    {
-        return *reinterpret_cast <unsigned long int *> (&i);
-    }
+    bool IsInRange (TValue argValue) const {return ((argValue >= RangeMin) && (argValue <= RangeMax));}
 
-    inline long int i (unsigned long int u) const
-    {
-        return *reinterpret_cast <long int *> (&u);
-    }
-*/
-    unsigned long int Value;
-    unsigned long int RangeMin;
-    unsigned long int RangeMax;
+    bool IsNewValueSource;
 
-    int BitsCount;
+    StepEnabled stepEnabled () const {return (StepUpEnabled | StepDownEnabled); }
 
 private slots:
 
-    void SlotOnChanged () {emit valueChanged ();}
+//  void SlotOnChanged () {emit valueChanged ();}
+    void SlotTextChanged (const QString &);
+
+    void stepBy   (int steps);
 
 signals:
 
-    void valueChanged ();
+//  void valueChanged ();
+//  void SignalIsNewValueSource (TValue);
+    void SignalIsNewValueSource ();
 
 };
 
@@ -262,4 +267,4 @@ private:
 
 
 
-#endif // THEXSPINBOX_H
+#endif // BMQSPINBOX_H

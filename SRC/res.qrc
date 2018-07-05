@@ -1,0 +1,25 @@
+<RCC>
+    <qresource prefix="/">
+        <file>FONTS/PTM55F.ttf</file>
+        <file>FONTS/PTM75F.ttf</file>
+        <file>PICS/bitmask20.ico</file>
+        <file>PICS/bitmask20.png</file>
+        <file>PICS/Cancel_2.png</file>
+        <file>PICS/db_close_2b.png</file>
+        <file>PICS/db_open_2b.png</file>
+        <file>PICS/Edit_m.png</file>
+        <file>PICS/excel.png</file>
+        <file>PICS/exit.png</file>
+        <file>PICS/exit_2.png</file>
+        <file>PICS/exit_3.png</file>
+        <file>PICS/exit_4.png</file>
+        <file>PICS/exit_5.png</file>
+        <file>PICS/exit_5g.png</file>
+        <file>PICS/exit_g.png</file>
+        <file>PICS/Left_m.png</file>
+        <file>PICS/Ok_2.png</file>
+        <file>PICS/Right_m.png</file>
+        <file>PICS/View_m.png</file>
+        <file>PICS/Warning_m.png</file>
+    </qresource>
+</RCC>

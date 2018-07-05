@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui widgets
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -26,17 +26,22 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES +=\
     ../../../../SRC/main.cpp \
     ../../../../SRC/mainwindow.cpp \
-    ../../../../SRC/thexspinbox.cpp \
-    ../../../../SRC/tspinbox64.cpp
+    ../../../../SRC/bmqspinbox.cpp \
+    ../../../../SRC/dlgmaskdatastyle.cpp
 
 HEADERS  += \
     ../../../../SRC/mainwindow.h \
-    ../../../../SRC/thexspinbox.h \
-    ../../../../SRC/tspinbox64.h
+    ../../../../SRC/bmqspinbox.h \
+    ../../../../SRC/dlgmaskdatastyle.h \
+    ../../../../SRC/maskdata.h
 
 FORMS    += \
-    ../../../../SRC/mainwindow.ui
+    ../../../../SRC/mainwindow.ui \
+    ../../../../SRC/dlgmaskdatastyle.ui
 
 INCLUDEPATH += ../../../../SRC/
 
 DEPENDPATH  += ../../../../SRC
+
+RESOURCES += \
+    ../../../../SRC/res.qrc
