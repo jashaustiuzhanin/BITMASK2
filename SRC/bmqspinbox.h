@@ -3,7 +3,9 @@
 
 #include <QtCore>
 #include <QObject>
+#ifdef HAVE_QT5
 #include <QtWidgets>
+#endif
 #include <QLineEdit>
 #include <QSpinBox>
 

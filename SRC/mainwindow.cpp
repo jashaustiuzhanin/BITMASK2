@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "dlgmaskdatastyle.h"
+#include <QFileDialog>
 
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
@@ -18,14 +19,10 @@ MainWindow :: MainWindow (QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    ui->setupUi(this);
+    ui->setupUi (this);
 
     setWindowTitle ("BitMask 2.0");
     setWindowIcon  (QIcon (":/PICS/bitmask20.png"));
-
-    ui->grpDEC_HEX_BIN->setVisible (true );
-    ui->grp32_bits    ->setVisible (true );
-    ui->grpBitmask    ->setVisible (false);
 
     ui->spnDecimal    ->SetMode (BMQSpinBox::modeDECIMAL    );
     ui->spnDecimal    ->SetBitsCount_32 ();
@@ -56,6 +53,7 @@ MainWindow :: MainWindow (QWidget *parent) :
     Value = 0;
     ShowValue ();
 
+    CfgFileName  = "";
     CfgFileState = filestateNOT_OPENED_NO_CHANGES;
 
     QStringList headers_colors;
@@ -87,10 +85,10 @@ MainWindow :: MainWindow (QWidget *parent) :
     // инициализация цветов отображения битовых масок значениями по умолчанию
     for (int i = 0; i<32; i++)
     {
-        MaskDataOfBit[i].BackColorState0 = Qt::gray;
-        MaskDataOfBit[i].TextColorState0 = Qt::black;
-        MaskDataOfBit[i].BackColorState1 = Qt::darkBlue;
-        MaskDataOfBit[i].TextColorState1 = Qt::white;
+        Settings.MaskDataOfBit[i].BackColorState0 = Qt::gray;
+        Settings.MaskDataOfBit[i].TextColorState0 = Qt::black;
+        Settings.MaskDataOfBit[i].BackColorState1 = Qt::darkBlue;
+        Settings.MaskDataOfBit[i].TextColorState1 = Qt::white;
     }
 
     /* Выполняем заполнение QTableWidget записями с помощью цикла */
@@ -151,12 +149,12 @@ MainWindow :: MainWindow (QWidget *parent) :
         QTableWidgetItem *p_item1;
         QTableWidgetItem *p_item4;
         p_item0 = new QTableWidgetItem (QString("*"));
-        p_item0->setBackground (QBrush(MaskDataOfBit[i].BackColorState0));
-        p_item0->setForeground (QBrush(MaskDataOfBit[i].TextColorState0));
+        p_item0->setBackground (QBrush(Settings.MaskDataOfBit[i].BackColorState0));
+        p_item0->setForeground (QBrush(Settings.MaskDataOfBit[i].TextColorState0));
         ui->tblBitmask->setItem (i, 0, p_item0);
         p_item1 = new QTableWidgetItem (QString("*"));
-        p_item1->setBackground (QBrush(MaskDataOfBit[i].BackColorState1));
-        p_item1->setForeground (QBrush(MaskDataOfBit[i].TextColorState1));
+        p_item1->setBackground (QBrush(Settings.MaskDataOfBit[i].BackColorState1));
+        p_item1->setForeground (QBrush(Settings.MaskDataOfBit[i].TextColorState1));
         ui->tblBitmask->setItem (i, 1, p_item1);
         p_item4 = new QTableWidgetItem (QString(""));
         ui->tblBitmask->setItem (i, 4, p_item4);
@@ -231,6 +229,7 @@ MainWindow :: MainWindow (QWidget *parent) :
     adjustSize ();
 
     SlotMenuEnableDisable ();
+    ShowGroups ();
 }
 
 /*------------------------------------------------------------------*/
@@ -375,9 +374,9 @@ void MainWindow :: SlotOnBitmaskClicked (int Row, int Column)
 */
         DlgMaskDataStyle *p_dlg = new DlgMaskDataStyle (this);
         int dlg_result;
-        p_dlg->SetData (Row, MaskDataOfBit[Row]);
+        p_dlg->SetData (Row, Settings.MaskDataOfBit[Row]);
         dlg_result = p_dlg->exec ();
-        if (dlg_result == QDialog::Accepted) MaskDataOfBit[Row] = p_dlg->GetData ();
+        if (dlg_result == QDialog::Accepted) Settings.MaskDataOfBit[Row] = p_dlg->GetData ();
         ShowValue ();
     }
     // если клик был произведён на столбце с выбором цвета для состояния 1,
@@ -390,9 +389,9 @@ void MainWindow :: SlotOnBitmaskClicked (int Row, int Column)
 */
         DlgMaskDataStyle *p_dlg = new DlgMaskDataStyle (this);
         int dlg_result;
-        p_dlg->SetData (Row, MaskDataOfBit[Row]);
+        p_dlg->SetData (Row, Settings.MaskDataOfBit[Row]);
         dlg_result = p_dlg->exec ();
-        if (dlg_result == QDialog::Accepted) MaskDataOfBit[Row] = p_dlg->GetData ();
+        if (dlg_result == QDialog::Accepted) Settings.MaskDataOfBit[Row] = p_dlg->GetData ();
         ShowValue ();
     }
 
@@ -558,24 +557,24 @@ void MainWindow :: ShowValue ()
         if (!item4) continue;
         if (val_flag) 
         {
-            item4->setBackground (QBrush (MaskDataOfBit[i].BackColorState1));
-            item4->setForeground (QBrush (MaskDataOfBit[i].TextColorState1));
+            item4->setBackground (QBrush (Settings.MaskDataOfBit[i].BackColorState1));
+            item4->setForeground (QBrush (Settings.MaskDataOfBit[i].TextColorState1));
         }
         else
         {
-            item4->setBackground (QBrush (MaskDataOfBit[i].BackColorState0));
-            item4->setForeground (QBrush (MaskDataOfBit[i].TextColorState0));
+            item4->setBackground (QBrush (Settings.MaskDataOfBit[i].BackColorState0));
+            item4->setForeground (QBrush (Settings.MaskDataOfBit[i].TextColorState0));
         }
 
         // Раскраска ячеек с выбранными цветами лля окрашивания
         QTableWidgetItem *item0 = ui->tblBitmask->item (i, 0);
         if (!item0) continue;
-        item0->setBackground (QBrush (MaskDataOfBit[i].BackColorState0));
-        item0->setForeground (QBrush (MaskDataOfBit[i].TextColorState0));
+        item0->setBackground (QBrush (Settings.MaskDataOfBit[i].BackColorState0));
+        item0->setForeground (QBrush (Settings.MaskDataOfBit[i].TextColorState0));
         QTableWidgetItem *item1 = ui->tblBitmask->item (i, 1);
         if (!item1) continue;
-        item1->setBackground (QBrush (MaskDataOfBit[i].BackColorState1));
-        item1->setForeground (QBrush (MaskDataOfBit[i].TextColorState1));
+        item1->setBackground (QBrush (Settings.MaskDataOfBit[i].BackColorState1));
+        item1->setForeground (QBrush (Settings.MaskDataOfBit[i].TextColorState1));
 
     }
 
@@ -593,6 +592,7 @@ void MainWindow :: SlotMenuEnableDisable ()
         ui->actFILE_Open   ->setEnabled (true );
         ui->actFILE_Save   ->setEnabled (false);
         ui->actFILE_Save_As->setEnabled (false);
+//      ui->actFILE_Save_As->setEnabled (true );
     }
     if      (CfgFileState == filestateNOT_OPENED_UNSAVED_CHANGES)
     {
@@ -619,10 +619,20 @@ void MainWindow :: SlotMenuEnableDisable ()
 }
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
-void MainWindow :: on_actVIEW_DEC_HEX_BIN_triggered ()
+void MainWindow :: ShowGroups ()
 {
-    if (ui->grpDEC_HEX_BIN->isVisible()) ui->grpDEC_HEX_BIN->setVisible (false);
-    else                                 ui->grpDEC_HEX_BIN->setVisible (true );
+    ui->spnByte0_HexLeft ->setVisible (Settings.Visible_Group32Bits_Hex);
+    ui->spnByte0_HexRight->setVisible (Settings.Visible_Group32Bits_Hex);
+    ui->spnByte1_HexLeft ->setVisible (Settings.Visible_Group32Bits_Hex);
+    ui->spnByte1_HexRight->setVisible (Settings.Visible_Group32Bits_Hex);
+    ui->spnByte2_HexLeft ->setVisible (Settings.Visible_Group32Bits_Hex);
+    ui->spnByte2_HexRight->setVisible (Settings.Visible_Group32Bits_Hex);
+    ui->spnByte3_HexLeft ->setVisible (Settings.Visible_Group32Bits_Hex);
+    ui->spnByte3_HexRight->setVisible (Settings.Visible_Group32Bits_Hex);
+
+    ui->grpDEC_HEX_BIN->setVisible (Settings.Visible_GroupDecHexBin);
+    ui->grp32_bits    ->setVisible (Settings.Visible_Group32Bits   );
+    ui->grpBitmask    ->setVisible (Settings.Visible_GroupBitmask  );
     adjustSize ();
 
     // !!!ATT!!! temporary block for right working of adjustSize
@@ -631,42 +641,55 @@ void MainWindow :: on_actVIEW_DEC_HEX_BIN_triggered ()
     adjustSize ();
     ui->tbrMainToolbar->setVisible ( temp);
     adjustSize ();
+}
+
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow :: on_actVIEW_DEC_HEX_BIN_triggered ()
+{
+    Settings.Visible_GroupDecHexBin = !Settings.Visible_GroupDecHexBin;
+    ShowGroups ();
 }
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
 void MainWindow :: on_actVIEW_32_bits_triggered ()
 {
-    if (ui->grp32_bits->isVisible()) ui->grp32_bits->setVisible (false);
-    else                             ui->grp32_bits->setVisible (true );
-    adjustSize ();
-
-    // !!!ATT!!! temporary block for right working of adjustSize
-    bool temp = ui->tbrMainToolbar->isVisible();
-    ui->tbrMainToolbar->setVisible (!temp);
-    adjustSize ();
-    ui->tbrMainToolbar->setVisible ( temp);
-    adjustSize ();
+    Settings.Visible_Group32Bits = !Settings.Visible_Group32Bits;
+    ShowGroups ();
 }
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
 void MainWindow :: on_actVIEW_Bitmask_triggered ()
 {
-    if (ui->grpBitmask->isVisible()) ui->grpBitmask->setVisible (false);
-    else                             ui->grpBitmask->setVisible (true );
-    adjustSize ();
-
-    // !!!ATT!!! temporary block for right working of adjustSize
-    bool temp = ui->tbrMainToolbar->isVisible();
-    ui->tbrMainToolbar->setVisible (!temp);
-    adjustSize ();
-    ui->tbrMainToolbar->setVisible ( temp);
-    adjustSize ();
+    Settings.Visible_GroupBitmask = !Settings.Visible_GroupBitmask;
+    ShowGroups ();
 }
 /*------------------------------------------------------------------*/
+/*         Считывание настроек отчёта из файла формата XML          */
 /*------------------------------------------------------------------*/
 void MainWindow::on_actFILE_Open_triggered()
 {
+    bool tmp_result = false;
+
+    // Выбор имени для файла из которого будут считываться параметры отчёта
+    QString filename = QFileDialog::getOpenFileName
+                       (
+                           this,
+                           QString::fromUtf8 ("Выбрать файл для считывания параметров отчёта"),
+                           QDir::currentPath (),
+                           "XML (*.xml);;All files (*.*)"
+                       );
+    if ((filename == "") || (filename == 0) || (filename == QString())) return;
+
+    tmp_result = Settings.ReadFromXML (filename);
+
+    if (!tmp_result) return;
+
+    CfgFileName  = filename;
     CfgFileState = filestateOPENED_NO_CHANGES;
+
+    ShowValue  ();
+    ShowGroups ();
     SlotMenuEnableDisable ();
 }
 /*------------------------------------------------------------------*/
@@ -677,10 +700,29 @@ void MainWindow::on_actFILE_Save_triggered()
     SlotMenuEnableDisable ();
 }
 /*------------------------------------------------------------------*/
+/*           Сохранение настроек отчёта в файл формата XML          */
 /*------------------------------------------------------------------*/
 void MainWindow::on_actFILE_Save_As_triggered()
 {
+    bool tmp_result = false;
+
+    // Выбор имени для файла, в который будут сохраняться параметры отчёта
+    QString filename = QFileDialog::getSaveFileName
+                       (
+                           this,
+                           QString::fromUtf8 ("Выбрать файл для сохранения параметров отчёта"),
+                           QDir::currentPath (),
+                           "XML (*.xml);;All files (*.*)"
+                       );
+    if ((filename == "") || (filename == 0) || (filename == QString())) return;
+
+    tmp_result = Settings.SaveToXML (filename);
+
+    CfgFileName  = filename;
     CfgFileState = filestateOPENED_NO_CHANGES;
+
+    ShowValue  ();
+    ShowGroups ();
     SlotMenuEnableDisable ();
 }
 /*------------------------------------------------------------------*/
@@ -718,288 +760,29 @@ void MainWindow::on_actFILE_Quit_triggered()
 /*------------------------------------------------------------------*/
 bool MainWindow :: OpenCfgFile (QString FileName)
 {
-    if ((FileName == "") || (FileName == 0) || (FileName == QString())) return false;
+    bool read_result = false;
+    QString filename;
 
-    QFile file (FileName);
-    bool  tmp_result;
+    filename = QFileDialog :: getOpenFileName
+               (
+                   this, 
+                   QString::fromUtf8 ("Open Bitmask config-file"),
+                   QDir::currentPath (),
+                   "Xml (*.xml);;All files (*.*)"
+               );
+    if (filename == "") return false;
+    if (filename ==  0) return false;
 
-    /* открытие читаемого XML-файла */
-    tmp_result = file.open (QFile::ReadOnly | QFile::Text);
+    read_result = Settings.ReadFromXML (filename);
+    if (!read_result) return false;
 
-    if (!tmp_result)
-    {
-        QMessageBox::warning (0,
-                              "Ошибка файла",
-                              "Не удалось открыть файл",
-                              QMessageBox::Ok);
-        return false;
-    }
-
-    /* Создаётся объект, с помощью которого осуществляется чтение из файла */
-    QXmlStreamReader xml_reader;
-    xml_reader.setDevice (&file);
-    xml_reader.readNext ();   // Переход к первому элементу в файле
-
-    /* Цикл до тех пор, пока не будет достигнут конец документа */
-    while (!xml_reader.atEnd ())
-    {
-#ifdef __DELETED_FRAGMENT__
-        /* Проверка, является ли данный элемент началом тега */
-        if (xml_reader.isStartElement ())
-        {
-            bool already_found = true;
-
-            // Считывается тег первого элемента
-            if (xml_reader.name () == "BitmaskParams")
-            {
-            }
-
-            // Считывается тег с именем файла, содержащего отчёт
-            else if (xml_reader.name () == "ReportFilePath")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {ReportFilePath = (attr.value().toString ());}
-                }
-            }
-            // Считывается тег с названием организации
-            else if (xml_reader.name () == "OrganizationName")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {OrganizationName = (attr.value().toString ());}
-                }
-            }
-            // Считывается тег с именем файла, содержащего логотип
-            else if (xml_reader.name () == "LogoImagePath")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {LogoImagePath = (attr.value().toString ());}
-                }
-            }
-            // Считывается тег с Названием документа отчёта
-            else if (xml_reader.name () == "Title1")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {Title1 = (attr.value().toString ());}
-                }
-            }
-            // Считывается тег с дополнительным заголовком
-            else if (xml_reader.name () == "Title2")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {Title2 = (attr.value().toString ());}
-                }
-            }
-            // Считывается тег с Надписью над таблицей
-            else if (xml_reader.name () == "TableOverHat")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {TableOverHat = (attr.value().toString ());}
-                }
-            }
-
-            // Считывается тег со значением поля Шахта, скважина, глубина и т.д.
-            else if (xml_reader.name () == "Shachta")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {Shachta = (attr.value().toString ());}
-                }
-            }
-
-
-            // Считывается тег со значением поля Подпись 1
-            else if (xml_reader.name () == "Podpis1")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {Podpis1 = (attr.value().toString ());}
-                }
-            }
-            // Считывается тег со значением поля Подпись 2
-            else if (xml_reader.name () == "Podpis2")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {Podpis2 = (attr.value().toString ());}
-                }
-            }
-            // Считывается тег со значением поля Подпись 3
-            else if (xml_reader.name () == "Podpis3")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {Podpis3 = (attr.value().toString ());}
-                }
-            }
-            // Считывается тег со значением поля Телефон 1
-            else if (xml_reader.name () == "Tel1")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {Tel1 = (attr.value().toString ());}
-                }
-            }
-            // Считывается тег со значением поля Телефон 2
-            else if (xml_reader.name () == "Tel2")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {Tel2 = (attr.value().toString ());}
-                }
-            }
-            // Считывается тег со значением поля EMail
-            else if (xml_reader.name () == "EMail")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {EMail = (attr.value().toString ());}
-                }
-            }
-            // Считывается тег со значением поля Site
-            else if (xml_reader.name () == "Site")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {Site = (attr.value().toString ());}
-                }
-            }
-
-
-        }
-#endif /*__DELETED_FRAGMENT__*/
-
-        xml_reader.readNext (); // Переход к следующему элементу XML-файла
-    }
-
-    file.close (); // Закрытие файла
+    CfgFileName  = filename;
+    CfgFileState = filestateOPENED_NO_CHANGES;
 
     return true;
 }
 
 
-#ifdef __DELETED_FRAGMENT__
-    /* Цикл до тех пор, пока не будет достигнут конец документа */
-    while (!xmlReader.atEnd ())
-    {
-        /* Проверка, является ли данный элемент началом тега */
-        if (xmlReader.isStartElement ())
-        {
-//          bool already_found = false;
-
-            // Найден тег начала данных, содержащих задаваемые параметры для расчёта
-            if (CalcParams && (xmlReader.name () == "CalcParams"))
-            {
-                // считываются задаваемые параметры для расчёта
-                tmp_result = ReadFromXML_CalcParams     (&xmlReader);
-                if (!tmp_result) {file.close (); return false;}
-            }
-
-            // Найден тег начала данных, содержащих данные эксперимента
-            else if (ExperimentData && (xmlReader.name () == "ExperimentData"))
-            {
-                // считываются данные эксперимента
-                tmp_result = ReadFromXML_ExperimentData (&xmlReader);
-                if (!tmp_result) {file.close (); return false;}
-            }
-
-            // Найден тег начала данных, содержащих параметры, выбираемые пользователем для обработки методом 1 (корень квадратный из времени)
-            else if (UserChoice && (xmlReader.name () == "UserChoice_Method1"))
-            {
-                // считываются параметры, выбираемые пользователем
-                tmp_result = ReadFromXML_UserChoice_Method1    (&xmlReader);
-                if (!tmp_result) {file.close (); return false;}
-            }
-
-            // Найден тег начала данных, содержащих параметры, выбираемые пользователем для обработки методом 2 (логарифм из времени)
-            else if (UserChoice && (xmlReader.name () == "UserChoice_Method2"))
-            {
-                // считываются параметры, выбираемые пользователем
-                tmp_result = ReadFromXML_UserChoice_Method2    (&xmlReader);
-                if (!tmp_result) {file.close (); return false;}
-            }
-
-            // Найден тег начала данных, содержащих результаты расчётов обработки методом 1 (корень квадратный из времени)
-            else if (CalcResults && (xmlReader.name () == "CalcResults_Method1"))
-            {
-                // считываются результаты расчётов
-                tmp_result = ReadFromXML_CalcResults_Method1    (&xmlReader);
-                if (!tmp_result) {file.close (); return false;}
-            }
-
-            // Найден тег начала данных, содержащих результаты расчётов обработки методом методом 2 (логарифм из времени)
-            else if (CalcResults && (xmlReader.name () == "CalcResults_Method2"))
-            {
-                // считываются результаты расчётов
-                tmp_result = ReadFromXML_CalcResults_Method2    (&xmlReader);
-                if (!tmp_result) {file.close (); return false;}
-            }
-
-            // Найден тег начала данных, содержащих внутренние рассчитываемые данные
-            else if (InternalCalcData && (xmlReader.name () == "InternalCalcData"))
-            {
-                // считываются результаты расчётов
-                tmp_result = ReadFromXML_InternalCalcData    (&xmlReader);
-                if (!tmp_result) {file.close (); return false;}
-            }
-
-        } // end if isStartElement
-
-        xmlReader.readNext (); // Переход к следующему элементу XML-файла
-    }
-
-
-    file.close (); // Закрытие файла
-/*
-            bool already_found = false;
-                already_found = true;
-
-
-    xmlWriter.writeStartElement  ("ConsProcData");  // Записывается первый элемент с его именем
-    xmlWriter.writeAttribute     ("CalcParams"    , (CalcParams     ? "true" : "false"));
-    xmlWriter.writeAttribute     ("ExperimentData", (ExperimentData ? "true" : "false"));
-    xmlWriter.writeAttribute     ("UserChoice"    , (UserChoice     ? "true" : "false"));
-    xmlWriter.writeAttribute     ("CalcResults"   , (CalcResults    ? "true" : "false"));
-*/
-    return true;
-}
-
-
-
-#endif /*__DELETED_FRAGMENT__*/
 
 /*------------------------------------------------------------------*/
 bool MainWindow :: SaveCfgFile (QString FileName)
@@ -1010,81 +793,10 @@ bool MainWindow :: SaveCfgFile (QString FileName)
     QFile file (FileName);
     file.open (QIODevice::WriteOnly);
 
-#ifdef __DELETED_FRAGMENT__
-    /* Создаем объект, с помощью которого осуществляется запись в файл XML */
-    QXmlStreamWriter xmlWriter   (&file);
-    xmlWriter.setAutoFormatting  (true);  // Устанавливается автоформатирование текста
-    xmlWriter.writeStartDocument ();      // Запускается запись в документ
-    xmlWriter.writeStartElement  ("ReportParams");   // Записывается первый элемент с его именем
-
-    // записываем имена и значения параметров в виде тегов и их атрибутов
-
-    xmlWriter.writeStartElement ("ReportFilePath");   // Записывается тег с именем файла, содержащего отчёт
-    xmlWriter.writeAttribute    ("value", ReportFilePath);
-    xmlWriter.writeEndElement   ();                   // Тег закрывается
-
-    xmlWriter.writeStartElement ("OrganizationName"); // Записывается тег с названием организации
-    xmlWriter.writeAttribute    ("value", OrganizationName);
-    xmlWriter.writeEndElement   ();                   // Тег закрывается
-
-    xmlWriter.writeStartElement ("LogoImagePath");    // Записывается тег с именем файла, содержащего логотип
-    xmlWriter.writeAttribute    ("value", LogoImagePath);
-    xmlWriter.writeEndElement   ();                   // Тег закрывается
-
-    xmlWriter.writeStartElement ("Title1");           // Записывается тег с Названием документа отчёта
-    xmlWriter.writeAttribute    ("value", Title1);
-    xmlWriter.writeEndElement   ();                   // Тег закрывается
-
-    xmlWriter.writeStartElement ("Title2");           // Записывается тег с дополнительным заголовком
-    xmlWriter.writeAttribute    ("value", Title2);
-    xmlWriter.writeEndElement   ();                   // Тег закрывается
-
-    xmlWriter.writeStartElement ("TableOverHat");     // Записывается тег с Надписью над таблицей
-    xmlWriter.writeAttribute    ("value", TableOverHat);
-    xmlWriter.writeEndElement   ();                   // Тег закрывается
-
-
-    xmlWriter.writeStartElement ("Shachta");          // Записывается тег со значением поля Шахта, скважина, глубина и т.д.
-    xmlWriter.writeAttribute    ("value", Shachta);
-    xmlWriter.writeEndElement   ();                   // Тег закрывается
-
-
-    xmlWriter.writeStartElement ("Podpis1");          // Записывается тег со значением поля Подпись 1
-    xmlWriter.writeAttribute    ("value", Podpis1);
-    xmlWriter.writeEndElement   ();                   // Тег закрывается
-
-    xmlWriter.writeStartElement ("Podpis2");          // Записывается тег со значением поля Подпись 2
-    xmlWriter.writeAttribute    ("value", Podpis2);
-    xmlWriter.writeEndElement   ();                   // Тег закрывается
-
-    xmlWriter.writeStartElement ("Podpis3");          // Записывается тег со значением поля Подпись 3
-    xmlWriter.writeAttribute    ("value", Podpis3);
-    xmlWriter.writeEndElement   ();                   // Тег закрывается
-
-    xmlWriter.writeStartElement ("Tel1");             // Записывается тег со значением поля Телефон 1
-    xmlWriter.writeAttribute    ("value", Tel1);
-    xmlWriter.writeEndElement   ();                   // Тег закрывается
-
-    xmlWriter.writeStartElement ("Tel2");             // Записывается тег со значением поля Телефон 2
-    xmlWriter.writeAttribute    ("value", Tel2);
-    xmlWriter.writeEndElement   ();                   // Тег закрывается
-
-    xmlWriter.writeStartElement ("EMail");            // Записывается тег со значением поля EMail
-    xmlWriter.writeAttribute    ("value", EMail);
-    xmlWriter.writeEndElement   ();                   // Тег закрывается
-
-    xmlWriter.writeStartElement ("Site");             // Записывается тег со значением поля Site
-    xmlWriter.writeAttribute    ("value", Site);
-    xmlWriter.writeEndElement   ();                   // Тег закрывается
-
-
-    /* Закрывается тег первого элемента */
-    xmlWriter.writeEndElement ();
-    /* Завершается запись в алемент */
-    xmlWriter.writeEndDocument ();
-#endif /*__DELETED_FRAGMENT__*/
 
     file.close ();   // Закрывается файл
+
+    return true;
 }
 /*------------------------------------------------------------------*/
 

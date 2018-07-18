@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>784</width>
-    <height>483</height>
+    <height>503</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -1330,7 +1330,7 @@ color: rgb(255, 200, 200);</string>
    </property>
    <widget class="QMenu" name="menuFile">
     <property name="title">
-     <string>File</string>
+     <string>&amp;File</string>
     </property>
     <addaction name="actFILE_Open"/>
     <addaction name="actFILE_Save"/>
@@ -1339,15 +1339,22 @@ color: rgb(255, 200, 200);</string>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
-     <string>View</string>
+     <string>&amp;View</string>
     </property>
     <addaction name="actVIEW_DEC_HEX_BIN"/>
     <addaction name="actVIEW_32_bits"/>
     <addaction name="actVIEW_Bitmask"/>
     <addaction name="actVIEW_MainToolbar"/>
    </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>&amp;Help</string>
+    </property>
+    <addaction name="actHELP_About"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QToolBar" name="tbrMainToolbar">
    <attribute name="toolBarArea">
@@ -1367,7 +1374,10 @@ color: rgb(255, 200, 200);</string>
      <normaloff>:/PICS/db_open_2b.png</normaloff>:/PICS/db_open_2b.png</iconset>
    </property>
    <property name="text">
-    <string>Open</string>
+    <string>&amp;Open</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
    </property>
   </action>
   <action name="actFILE_Save">
@@ -1376,7 +1386,10 @@ color: rgb(255, 200, 200);</string>
      <normaloff>:/PICS/Ok_2.png</normaloff>:/PICS/Ok_2.png</iconset>
    </property>
    <property name="text">
-    <string>Save</string>
+    <string>&amp;Save</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
    </property>
   </action>
   <action name="actFILE_Save_As">
@@ -1385,7 +1398,10 @@ color: rgb(255, 200, 200);</string>
      <normaloff>:/PICS/View_m.png</normaloff>:/PICS/View_m.png</iconset>
    </property>
    <property name="text">
-    <string>Save As</string>
+    <string>Save &amp;As</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+S</string>
    </property>
   </action>
   <action name="actFILE_Quit">
@@ -1394,7 +1410,10 @@ color: rgb(255, 200, 200);</string>
      <normaloff>:/PICS/exit_5.png</normaloff>:/PICS/exit_5.png</iconset>
    </property>
    <property name="text">
-    <string>Quit</string>
+    <string>&amp;Quit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
    </property>
   </action>
   <action name="actVIEW_DEC_HEX_BIN">
@@ -1433,6 +1452,14 @@ color: rgb(255, 200, 200);</string>
   <action name="actVIEW_MainToolbar">
    <property name="text">
     <string>Main Toolbar</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+T</string>
+   </property>
+  </action>
+  <action name="actHELP_About">
+   <property name="text">
+    <string>&amp;About</string>
    </property>
   </action>
  </widget>

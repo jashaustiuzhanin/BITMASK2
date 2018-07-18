@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BitmaskCfg>
+    <GroupDecHexBin show="true"/>
+    <Group32Bits show="true" hex_show="false"/>
+    <GroupBitmask show="false"/>
+</BitmaskCfg>

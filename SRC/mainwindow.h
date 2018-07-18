@@ -6,7 +6,7 @@
 #include "thexspinbox.h"
 #include "tspinbox64.h"
 #include "bmqspinbox.h"
-#include "maskdata.h"
+#include "settings.h"
 
 /*
 class HexSpinbox : public QSpinBox
@@ -36,7 +36,7 @@ private:
     int  Value;
     bool ShowInProcessFlag;
 
-    TMaskDataOfOneBit MaskDataOfBit [32];
+    TSettings Settings;
 
     typedef enum TFileState
     {
@@ -49,6 +49,7 @@ private:
     }
     TFileState;
 
+    QString    CfgFileName ;
     TFileState CfgFileState;
 
     bool OpenCfgFile (QString FileName);
@@ -57,6 +58,8 @@ private:
 
 private slots:
     void ShowValue ();
+    void SlotMenuEnableDisable ();
+    void ShowGroups ();
 
     void SlotOnSpnDecimal     ();
     void SlotOnSpnHexadecimal ();
@@ -68,8 +71,6 @@ private slots:
 
     void SlotOnBitmaskClicked (int Row, int Column);
     void SlotOnBitmaskChkBox  ();
-
-    void SlotMenuEnableDisable ();
 
     void on_actVIEW_DEC_HEX_BIN_triggered();
     void on_actVIEW_32_bits_triggered();

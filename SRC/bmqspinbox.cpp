@@ -51,7 +51,11 @@ void BMQSpinBox :: SlotTextChanged (const QString & argString)
     TValue val;
 
     val = valueFromText (argString);
+#ifdef isnan
+    if (     isnan (val)) return;
+#else
     if (std::isnan (val)) return;
+#endif
 
     if (val != Value)
     {
@@ -152,8 +156,13 @@ QValidator::State BMQSpinBox :: validate (QString &input, int &pos) const
     TValue val;
 
     val = valueFromText (copy);
+#ifdef isnan
+    if (     isnan (val)) return QValidator::Invalid   ;
+    else                  return QValidator::Acceptable;
+#else
     if (std::isnan (val)) return QValidator::Invalid   ;
     else                  return QValidator::Acceptable;
+#endif
 }
 
 /*------------------------------------------------------------------*/
