@@ -226,6 +226,8 @@ MainWindow :: MainWindow (QWidget *parent) :
 
     QObject :: connect (ui->tblBitmask, SIGNAL(cellClicked(int,int)), this, SLOT(SlotOnBitmaskClicked(int,int)));
 
+    QObject :: connect (ui->tblBitmask, SIGNAL(itemChanged(QTableWidgetItem *)), this, SLOT(SlotOnBitmaskText()));
+
     adjustSize ();
 
     SlotMenuEnableDisable ();
@@ -448,6 +450,17 @@ void MainWindow :: SlotOnBitmaskChkBox ()
 }
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
+void MainWindow :: SlotOnBitmaskText ()
+{
+    for (int i=0; i<32; i++)
+    {
+        QString text = ui->tblBitmask->item(i, 4)->text();
+        Settings.MaskDataOfBit[i].Text = text;
+    }
+}
+
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
 void MainWindow :: ShowValue ()
 {
     QString tmp_str ;
@@ -553,6 +566,7 @@ void MainWindow :: ShowValue ()
         checkbox->setChecked (val_flag);
 
         // Раскраска ячейки с текстом маски в зависимости от состояния бита
+        // и отображение текста
         QTableWidgetItem *item4 = ui->tblBitmask->item (i, 4);
         if (!item4) continue;
         if (val_flag) 
@@ -565,6 +579,9 @@ void MainWindow :: ShowValue ()
             item4->setBackground (QBrush (Settings.MaskDataOfBit[i].BackColorState0));
             item4->setForeground (QBrush (Settings.MaskDataOfBit[i].TextColorState0));
         }
+        QObject :: connect    (ui->tblBitmask, SIGNAL(itemChanged(QTableWidgetItem *)), this, SLOT(SlotOnBitmaskText()));
+        item4->setText (Settings.MaskDataOfBit[i].Text);
+        QObject :: disconnect (ui->tblBitmask, SIGNAL(itemChanged(QTableWidgetItem *)), this, SLOT(SlotOnBitmaskText()));
 
         // Раскраска ячеек с выбранными цветами лля окрашивания
         QTableWidgetItem *item0 = ui->tblBitmask->item (i, 0);
@@ -758,6 +775,7 @@ void MainWindow::on_actFILE_Quit_triggered()
 
 
 /*------------------------------------------------------------------*/
+/*
 bool MainWindow :: OpenCfgFile (QString FileName)
 {
     bool read_result = false;
@@ -783,13 +801,14 @@ bool MainWindow :: OpenCfgFile (QString FileName)
 }
 
 
-
+*/
 /*------------------------------------------------------------------*/
+/*
 bool MainWindow :: SaveCfgFile (QString FileName)
 {
     if ((FileName == "") || (FileName == 0) || (FileName == QString())) return false;
 
-    /* Открываем файл для Записи с помощью пути, указанного в filename */
+    // Открываем файл для Записи с помощью пути, указанного в filename
     QFile file (FileName);
     file.open (QIODevice::WriteOnly);
 
@@ -798,5 +817,6 @@ bool MainWindow :: SaveCfgFile (QString FileName)
 
     return true;
 }
+*/
 /*------------------------------------------------------------------*/
 

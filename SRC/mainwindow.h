@@ -52,8 +52,8 @@ private:
     QString    CfgFileName ;
     TFileState CfgFileState;
 
-    bool OpenCfgFile (QString FileName);
-    bool SaveCfgFile (QString FileName);
+//  bool OpenCfgFile (QString FileName);
+//  bool SaveCfgFile (QString FileName);
 
 
 private slots:
@@ -71,6 +71,7 @@ private slots:
 
     void SlotOnBitmaskClicked (int Row, int Column);
     void SlotOnBitmaskChkBox  ();
+    void SlotOnBitmaskText    ();
 
     void on_actVIEW_DEC_HEX_BIN_triggered();
     void on_actVIEW_32_bits_triggered();

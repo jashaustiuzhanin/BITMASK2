@@ -9,6 +9,8 @@ typedef struct TMaskDataOfOneBit
     QColor BackColorState1;
     QColor TextColorState0;
     QColor TextColorState1;
+
+    QString Text;
 }
 TMaskDataOfOneBit;
 

@@ -24,6 +24,8 @@ void TSettings :: SetDefault ()
         MaskDataOfBit [i].TextColorState0 = QColor (Qt::darkGray );
         MaskDataOfBit [i].BackColorState1 = QColor (Qt::darkGreen);
         MaskDataOfBit [i].TextColorState1 = QColor (Qt::white    );
+
+        MaskDataOfBit [i].Text = "";
     }
 }
 
@@ -328,37 +330,6 @@ bool TSettings :: ReadFromXML_Group32Bits (QXmlStreamReader *pXmlReader)
     }
 
 #ifdef __DELETED_FRAGMENT__
-    /* Цикл до тех пор, пока не будет достигнут конец тега ExperimentData или конец документа */
-    while (!exit_flag)
-    {
-        /* Проверка, является ли данный элемент началом тега */
-        if (pXmlReader->isStartElement ())
-        {
-
-            // Найден тег, содержащий значение параметра "h"
-            if (pXmlReader->name () == "Record")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, pXmlReader->attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "n"    ) {rec.PointNo = attr.value().toString().toInt    ();}
-                    if (attr.name().toString() == "t_min") {rec.TimeMin = attr.value().toString().toDouble ();}
-                    if (attr.name().toString() == "eps"  ) {rec.Epsylon = attr.value().toString().toDouble ();}
-                }
-
-                exp_data.ExpData.append (rec);
-            }
-
-        } // end if isStartElement
-
-        if ((pXmlReader->isEndElement ()) && (pXmlReader->name () == "ExperimentData")) exit_flag = true;
-        if (pXmlReader->atEnd ()                                                      ) exit_flag = true;
-
-        if (!exit_flag) pXmlReader->readNext (); // Переход к следующему элементу XML-файла
-    }
-
-    PD.SetConsExperimentData (exp_data);
 #endif /*__DELETED_FRAGMENT__*/
 
     return true;
@@ -375,6 +346,48 @@ bool TSettings :: ReadFromXML_GroupBitmask (QXmlStreamReader *pXmlReader)
     {
         // получение значений, когда найдены нужные атрибуты
         if (attr.name().toString() == "show") {Visible_GroupBitmask = (attr.value().toString () == "true");}
+    }
+
+    /* Цикл до тех пор, пока не будет достигнут конец тега GroupBitmask или конец документа */
+    while (!exit_flag)
+    {
+        /* Проверка, является ли данный элемент началом тега */
+        if (pXmlReader->isStartElement ())
+        {
+            QString tag_str     = pXmlReader->name().toString();
+            int     tag_str_len = tag_str.size ();
+
+            // Найден тег, содержащий значение параметра "BitXX"
+            if (tag_str.left(3) == "Bit")
+            {
+                // определяется номер бита, к которому относится тег
+                int     idx         = -1;
+                bool    idx_good    = false;
+                QString idx_str     = "";
+
+                if      (tag_str_len == 4) {idx_str = tag_str.right (1);} // Bit#
+                else if (tag_str_len == 5) {idx_str = tag_str.right (2);} // Bit##
+                else                       {idx_str = "";               } // incorrect
+                idx = idx_str.toInt(&idx_good, 10);
+                
+                // считываются все атрибуты и перебираются для выделения тех, которые нужны
+                if ((idx >= 0) && (idx < 32) && (idx_good))
+                {
+                    foreach (const QXmlStreamAttribute &attr, pXmlReader->attributes())
+                    {
+                        // получение значений, когда найдены нужные атрибуты
+                        if (attr.name().toString() == "text" ) {MaskDataOfBit[idx].Text = attr.value().toString();}
+                    }
+//                  exp_data.ExpData.append (rec);
+                }
+            }
+
+        } // end if isStartElement
+
+        if ((pXmlReader->isEndElement ()) && (pXmlReader->name () == "GroupBitmask")) exit_flag = true;
+        if (pXmlReader->atEnd ()                                                    ) exit_flag = true;
+
+        if (!exit_flag) pXmlReader->readNext (); // Переход к следующему элементу XML-файла
     }
 
     return true;
@@ -423,6 +436,15 @@ bool TSettings :: SaveToXML_GroupBitmask (QXmlStreamWriter *pXmlWriter)
 
     // записываются атрибуты общего тега
     pXmlWriter->writeAttribute    ("show", (Visible_GroupBitmask ? "true" : "false"));
+
+
+    // записываются параметры тегов BitXX
+    for (int i=0; i<32; i++)
+    {
+        pXmlWriter->writeStartElement ("Bit" + QString::number(i));
+        pXmlWriter->writeAttribute    ("text", MaskDataOfBit[i].Text);
+        pXmlWriter->writeEndElement   ();
+    }
 
     // общий тег закрывается
     pXmlWriter->writeEndElement   ();
