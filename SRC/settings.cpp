@@ -20,10 +20,16 @@ void TSettings :: SetDefault ()
 
     for (int i=0; i<32; i++)
     {
+/*
         MaskDataOfBit [i].BackColorState0 = QColor (Qt::lightGray);
         MaskDataOfBit [i].TextColorState0 = QColor (Qt::darkGray );
         MaskDataOfBit [i].BackColorState1 = QColor (Qt::darkGreen);
         MaskDataOfBit [i].TextColorState1 = QColor (Qt::white    );
+*/
+        MaskDataOfBit [i].BackColorState0 = QColor ();
+        MaskDataOfBit [i].TextColorState0 = QColor ();
+        MaskDataOfBit [i].BackColorState1 = QColor ();
+        MaskDataOfBit [i].TextColorState1 = QColor ();
 
         MaskDataOfBit [i].Text = "";
     }
@@ -376,7 +382,11 @@ bool TSettings :: ReadFromXML_GroupBitmask (QXmlStreamReader *pXmlReader)
                     foreach (const QXmlStreamAttribute &attr, pXmlReader->attributes())
                     {
                         // получение значений, когда найдены нужные атрибуты
-                        if (attr.name().toString() == "text" ) {MaskDataOfBit[idx].Text = attr.value().toString();}
+                        if (attr.name().toString() == "text"       ) {MaskDataOfBit[idx].Text            = attr.value().toString();}
+                        if (attr.name().toString() == "backcolor0" ) {MaskDataOfBit[idx].BackColorState0 = QColor (attr.value().toString());}
+                        if (attr.name().toString() == "textcolor0" ) {MaskDataOfBit[idx].TextColorState0 = QColor (attr.value().toString());}
+                        if (attr.name().toString() == "backcolor1" ) {MaskDataOfBit[idx].BackColorState1 = QColor (attr.value().toString());}
+                        if (attr.name().toString() == "textcolor1" ) {MaskDataOfBit[idx].TextColorState1 = QColor (attr.value().toString());}
                     }
 //                  exp_data.ExpData.append (rec);
                 }
@@ -442,7 +452,11 @@ bool TSettings :: SaveToXML_GroupBitmask (QXmlStreamWriter *pXmlWriter)
     for (int i=0; i<32; i++)
     {
         pXmlWriter->writeStartElement ("Bit" + QString::number(i));
-        pXmlWriter->writeAttribute    ("text", MaskDataOfBit[i].Text);
+        pXmlWriter->writeAttribute    ("text"      , MaskDataOfBit[i].Text);
+        if (MaskDataOfBit[i].BackColorState0.isValid()) pXmlWriter->writeAttribute    ("backcolor0", MaskDataOfBit[i].BackColorState0.name());
+        if (MaskDataOfBit[i].TextColorState0.isValid()) pXmlWriter->writeAttribute    ("textcolor0", MaskDataOfBit[i].TextColorState0.name());
+        if (MaskDataOfBit[i].BackColorState1.isValid()) pXmlWriter->writeAttribute    ("backcolor1", MaskDataOfBit[i].BackColorState1.name());
+        if (MaskDataOfBit[i].TextColorState1.isValid()) pXmlWriter->writeAttribute    ("textcolor1", MaskDataOfBit[i].TextColorState1.name());
         pXmlWriter->writeEndElement   ();
     }
 

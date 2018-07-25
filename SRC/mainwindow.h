@@ -7,6 +7,7 @@
 #include "tspinbox64.h"
 #include "bmqspinbox.h"
 #include "settings.h"
+#include "colorschema.h"
 
 /*
 class HexSpinbox : public QSpinBox
@@ -29,6 +30,11 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     
+public slots:
+  void keyPressEvent (QKeyEvent * event);
+
+protected:
+    virtual QSize sizeHint ();
 
 private:
     Ui::MainWindow *ui;
@@ -52,14 +58,23 @@ private:
     QString    CfgFileName ;
     TFileState CfgFileState;
 
+    TColorSchema ColorSchema;
+
 //  bool OpenCfgFile (QString FileName);
 //  bool SaveCfgFile (QString FileName);
 
+    QColor CurrTextColorSt0 (int BitNo);
+    QColor CurrBackColorSt0 (int BitNo);
+    QColor CurrTextColorSt1 (int BitNo);
+    QColor CurrBackColorSt1 (int BitNo);
+
+    void PasteFromBuffer ();
 
 private slots:
     void ShowValue ();
     void SlotMenuEnableDisable ();
     void ShowGroups ();
+    void ShowColorSchema ();
 
     void SlotOnSpnDecimal     ();
     void SlotOnSpnHexadecimal ();
@@ -81,6 +96,9 @@ private slots:
     void on_actFILE_Save_triggered();
     void on_actFILE_Save_As_triggered();
     void on_actVIEW_MainToolbar_triggered();
+    void on_actVIEW_32_bits_HEX_fields_triggered();
+    void on_actVIEW_Color_Standart_triggered();
+    void on_actVIEW_Color_jasha_triggered();
 };
 
 

@@ -30,14 +30,16 @@ SOURCES +=\
     ../../SRC/mainwindow.cpp \
     ../../SRC/bmqspinbox.cpp \
     ../../SRC/dlgmaskdatastyle.cpp \
-    ../../SRC/settings.cpp
+    ../../SRC/settings.cpp \
+    ../../SRC/colorschemas_init.cpp
 
 HEADERS  += \
     ../../SRC/mainwindow.h \
     ../../SRC/bmqspinbox.h \
     ../../SRC/dlgmaskdatastyle.h \
     ../../SRC/maskdata.h \
-    ../../SRC/settings.h
+    ../../SRC/settings.h \
+    ../../SRC/colorschema.h
 
 FORMS    += \
     ../../SRC/mainwindow.ui \

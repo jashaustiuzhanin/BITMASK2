@@ -20,10 +20,38 @@
    <string>MainWindow</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: rgb(0, 44, 255);
+   <string notr="true">QWidget{
+background-color: rgb(0, 44, 255);
 /*font: 7pt &quot;MS Shell Dlg 2&quot;;*/
 font: 8pt &quot;PT Mono&quot;;
-color: rgb(255, 200, 200);</string>
+color: rgb(255, 200, 200);
+}
+QMenuBar::item {
+background-color: rgb(0, 44, 255);
+/*font: 7pt &quot;MS Shell Dlg 2&quot;;*/
+font: 8pt &quot;PT Mono&quot;;
+color: rgb(255, 200, 200);
+}
+QMenu {
+background-color: rgb(0, 44, 255);
+/*font: 7pt &quot;MS Shell Dlg 2&quot;;*/
+font: 8pt &quot;PT Mono&quot;;
+color: rgb(255, 200, 200);
+}
+QMenu::item {
+background-color: rgb(0, 44, 255);
+/*font: 7pt &quot;MS Shell Dlg 2&quot;;*/
+font: 8pt &quot;PT Mono&quot;;
+color: rgb(255, 200, 200);
+}
+
+QMenu::item:selected { /* when user selects item using mouse or keyboard */
+    background-color: rgb(0, 0, 128);
+}
+QHeaderView::section {
+    background-color: rgb(0, 0, 128);
+}
+</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout_3">
@@ -1325,7 +1353,7 @@ color: rgb(255, 200, 200);</string>
      <x>0</x>
      <y>0</y>
      <width>784</width>
-     <height>18</height>
+     <height>19</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -1344,7 +1372,12 @@ color: rgb(255, 200, 200);</string>
     <addaction name="actVIEW_DEC_HEX_BIN"/>
     <addaction name="actVIEW_32_bits"/>
     <addaction name="actVIEW_Bitmask"/>
+    <addaction name="separator"/>
     <addaction name="actVIEW_MainToolbar"/>
+    <addaction name="actVIEW_32_bits_HEX_fields"/>
+    <addaction name="separator"/>
+    <addaction name="actVIEW_Color_Standart"/>
+    <addaction name="actVIEW_Color_jasha"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -1460,6 +1493,24 @@ color: rgb(255, 200, 200);</string>
   <action name="actHELP_About">
    <property name="text">
     <string>&amp;About</string>
+   </property>
+  </action>
+  <action name="actVIEW_32_bits_HEX_fields">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>32 bits / HEX fields</string>
+   </property>
+  </action>
+  <action name="actVIEW_Color_Standart">
+   <property name="text">
+    <string>Color Standart</string>
+   </property>
+  </action>
+  <action name="actVIEW_Color_jasha">
+   <property name="text">
+    <string>Color jasha</string>
    </property>
   </action>
  </widget>

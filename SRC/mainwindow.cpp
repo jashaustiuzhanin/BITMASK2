@@ -2,6 +2,15 @@
 #include "ui_mainwindow.h"
 #include "dlgmaskdatastyle.h"
 #include <QFileDialog>
+#include <QApplication>
+#include <QClipboard>
+#include <QMimeData>
+#include <QKeyEvent>
+
+/* глобальный список доступных цветовых схем */
+QVector <TColorSchema> ColorSchemas;
+/* реализовано в colorschemas_init.cpp */
+void ColorSchemas_Init ();
 
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
@@ -82,7 +91,12 @@ MainWindow :: MainWindow (QWidget *parent) :
     ui->tblBitmask->horizontalHeader()->resizeSection (0, 40);
     ui->tblBitmask->horizontalHeader()->resizeSection (1, 40);
 
+    // инициализация цветовых схем
+    ColorSchemas_Init ();
+    ColorSchema = ColorSchemas.at (0);
+
     // инициализация цветов отображения битовых масок значениями по умолчанию
+/*
     for (int i = 0; i<32; i++)
     {
         Settings.MaskDataOfBit[i].BackColorState0 = Qt::gray;
@@ -90,6 +104,8 @@ MainWindow :: MainWindow (QWidget *parent) :
         Settings.MaskDataOfBit[i].BackColorState1 = Qt::darkBlue;
         Settings.MaskDataOfBit[i].TextColorState1 = Qt::white;
     }
+*/
+//  ColorSchema.SetDefault ();
 
     /* Выполняем заполнение QTableWidget записями с помощью цикла */
     for (int i = 0; i<32; i++)
@@ -149,12 +165,12 @@ MainWindow :: MainWindow (QWidget *parent) :
         QTableWidgetItem *p_item1;
         QTableWidgetItem *p_item4;
         p_item0 = new QTableWidgetItem (QString("*"));
-        p_item0->setBackground (QBrush(Settings.MaskDataOfBit[i].BackColorState0));
-        p_item0->setForeground (QBrush(Settings.MaskDataOfBit[i].TextColorState0));
+        p_item0->setBackground (QBrush(CurrBackColorSt0(i)));
+        p_item0->setForeground (QBrush(CurrTextColorSt0(i)));
         ui->tblBitmask->setItem (i, 0, p_item0);
         p_item1 = new QTableWidgetItem (QString("*"));
-        p_item1->setBackground (QBrush(Settings.MaskDataOfBit[i].BackColorState1));
-        p_item1->setForeground (QBrush(Settings.MaskDataOfBit[i].TextColorState1));
+        p_item1->setBackground (QBrush(CurrBackColorSt1(i)));
+        p_item1->setForeground (QBrush(CurrTextColorSt1(i)));
         ui->tblBitmask->setItem (i, 1, p_item1);
         p_item4 = new QTableWidgetItem (QString(""));
         ui->tblBitmask->setItem (i, 4, p_item4);
@@ -228,10 +244,17 @@ MainWindow :: MainWindow (QWidget *parent) :
 
     QObject :: connect (ui->tblBitmask, SIGNAL(itemChanged(QTableWidgetItem *)), this, SLOT(SlotOnBitmaskText()));
 
-    adjustSize ();
-
+    ShowColorSchema ();
     SlotMenuEnableDisable ();
+    ShowValue ();
     ShowGroups ();
+
+    QRect r = geometry ();
+//  r.setHeight (10);
+//  r.setWidth  (10);
+//  setGeometry (r.left(), r.top(), 10, 10);
+
+//  adjustSize ();
 }
 
 /*------------------------------------------------------------------*/
@@ -452,11 +475,20 @@ void MainWindow :: SlotOnBitmaskChkBox ()
 /*------------------------------------------------------------------*/
 void MainWindow :: SlotOnBitmaskText ()
 {
+    if (ShowInProcessFlag) return;
+
     for (int i=0; i<32; i++)
     {
         QString text = ui->tblBitmask->item(i, 4)->text();
         Settings.MaskDataOfBit[i].Text = text;
     }
+}
+
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow :: ShowColorSchema ()
+{
+    this->setStyleSheet (ColorSchema.StyleSheetString);
 }
 
 /*------------------------------------------------------------------*/
@@ -569,29 +601,36 @@ void MainWindow :: ShowValue ()
         // и отображение текста
         QTableWidgetItem *item4 = ui->tblBitmask->item (i, 4);
         if (!item4) continue;
+
+        QColor text_color_st0 = CurrTextColorSt0 (i);
+        QColor back_color_st0 = CurrBackColorSt0 (i);
+        QColor text_color_st1 = CurrTextColorSt1 (i);
+        QColor back_color_st1 = CurrBackColorSt1 (i);
+
         if (val_flag) 
         {
-            item4->setBackground (QBrush (Settings.MaskDataOfBit[i].BackColorState1));
-            item4->setForeground (QBrush (Settings.MaskDataOfBit[i].TextColorState1));
+            item4->setBackground (QBrush (back_color_st1));
+            item4->setForeground (QBrush (text_color_st1));
         }
         else
         {
-            item4->setBackground (QBrush (Settings.MaskDataOfBit[i].BackColorState0));
-            item4->setForeground (QBrush (Settings.MaskDataOfBit[i].TextColorState0));
+            item4->setBackground (QBrush (back_color_st0));
+            item4->setForeground (QBrush (text_color_st0));
         }
-        QObject :: connect    (ui->tblBitmask, SIGNAL(itemChanged(QTableWidgetItem *)), this, SLOT(SlotOnBitmaskText()));
-        item4->setText (Settings.MaskDataOfBit[i].Text);
         QObject :: disconnect (ui->tblBitmask, SIGNAL(itemChanged(QTableWidgetItem *)), this, SLOT(SlotOnBitmaskText()));
+        item4->setText (Settings.MaskDataOfBit[i].Text);
+qDebug () << "Bit" << i << ": item4 text = " << item4->text() << ", Settings text = " << Settings.MaskDataOfBit[i].Text;
+        QObject :: connect    (ui->tblBitmask, SIGNAL(itemChanged(QTableWidgetItem *)), this, SLOT(SlotOnBitmaskText()));
 
         // Раскраска ячеек с выбранными цветами лля окрашивания
         QTableWidgetItem *item0 = ui->tblBitmask->item (i, 0);
         if (!item0) continue;
-        item0->setBackground (QBrush (Settings.MaskDataOfBit[i].BackColorState0));
-        item0->setForeground (QBrush (Settings.MaskDataOfBit[i].TextColorState0));
+        item0->setBackground (QBrush (back_color_st0));
+        item0->setForeground (QBrush (text_color_st0));
         QTableWidgetItem *item1 = ui->tblBitmask->item (i, 1);
         if (!item1) continue;
-        item1->setBackground (QBrush (Settings.MaskDataOfBit[i].BackColorState1));
-        item1->setForeground (QBrush (Settings.MaskDataOfBit[i].TextColorState1));
+        item1->setBackground (QBrush (back_color_st1));
+        item1->setForeground (QBrush (text_color_st1));
 
     }
 
@@ -630,14 +669,15 @@ void MainWindow :: SlotMenuEnableDisable ()
         ui->actFILE_Save_As->setEnabled (true );
     }
 
-    ui->actVIEW_DEC_HEX_BIN->setChecked (ui->grpDEC_HEX_BIN->isVisible ());
-    ui->actVIEW_32_bits    ->setChecked (ui->grp32_bits    ->isVisible ());
-    ui->actVIEW_Bitmask    ->setChecked (ui->grpBitmask    ->isVisible ());
 }
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
 void MainWindow :: ShowGroups ()
 {
+    // !!!ATT!!! temporary block for right working of adjustSize
+    bool temp = ui->tbrMainToolbar->isVisible();
+    ui->tbrMainToolbar->setVisible (!temp);
+
     ui->spnByte0_HexLeft ->setVisible (Settings.Visible_Group32Bits_Hex);
     ui->spnByte0_HexRight->setVisible (Settings.Visible_Group32Bits_Hex);
     ui->spnByte1_HexLeft ->setVisible (Settings.Visible_Group32Bits_Hex);
@@ -653,13 +693,58 @@ void MainWindow :: ShowGroups ()
     adjustSize ();
 
     // !!!ATT!!! temporary block for right working of adjustSize
-    bool temp = ui->tbrMainToolbar->isVisible();
-    ui->tbrMainToolbar->setVisible (!temp);
-    adjustSize ();
     ui->tbrMainToolbar->setVisible ( temp);
     adjustSize ();
+    resize(sizeHint());
+
+    ui->actVIEW_DEC_HEX_BIN->setChecked (ui->grpDEC_HEX_BIN->isVisible ());
+    ui->actVIEW_32_bits    ->setChecked (ui->grp32_bits    ->isVisible ());
+    ui->actVIEW_Bitmask    ->setChecked (ui->grpBitmask    ->isVisible ());
+
+    ui->actVIEW_32_bits_HEX_fields->setChecked (ui->spnByte0_HexLeft->isVisible());
+//  resize(sizeHint());
 }
 
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+QSize MainWindow :: sizeHint ()
+{
+    QSize s;
+    s.setHeight (10);
+    s.setWidth  (10);
+    return s;
+}
+
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+QColor MainWindow :: CurrTextColorSt0 (int BitNo)
+{
+    QColor text_color_st0 = QColor ();
+    if ((BitNo >= 0) && (BitNo < 32)) text_color_st0 = Settings.MaskDataOfBit[BitNo].TextColorState0;
+    if (!text_color_st0.isValid()   ) text_color_st0 = ColorSchema.TextColorSt0;
+    return text_color_st0;
+}
+QColor MainWindow :: CurrBackColorSt0 (int BitNo)
+{
+    QColor back_color_st0 = QColor ();
+    if ((BitNo >= 0) && (BitNo < 32)) back_color_st0 = Settings.MaskDataOfBit[BitNo].BackColorState0;
+    if (!back_color_st0.isValid()   ) back_color_st0 = ColorSchema.BackColorSt0;
+    return back_color_st0;
+}
+QColor MainWindow :: CurrTextColorSt1 (int BitNo)
+{
+    QColor text_color_st1 = QColor ();
+    if ((BitNo >= 0) && (BitNo < 32)) text_color_st1 = Settings.MaskDataOfBit[BitNo].TextColorState1;
+    if (!text_color_st1.isValid()   ) text_color_st1 = ColorSchema.TextColorSt1;
+    return text_color_st1;
+}
+QColor MainWindow :: CurrBackColorSt1 (int BitNo)
+{
+    QColor back_color_st1 = QColor ();
+    if ((BitNo >= 0) && (BitNo < 32)) back_color_st1 = Settings.MaskDataOfBit[BitNo].BackColorState1;
+    if (!back_color_st1.isValid()   ) back_color_st1 = ColorSchema.BackColorSt1;
+    return back_color_st1;
+}
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
 void MainWindow :: on_actVIEW_DEC_HEX_BIN_triggered ()
@@ -682,6 +767,27 @@ void MainWindow :: on_actVIEW_Bitmask_triggered ()
     ShowGroups ();
 }
 /*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow::on_actVIEW_32_bits_HEX_fields_triggered()
+{
+    Settings.Visible_Group32Bits_Hex = !Settings.Visible_Group32Bits_Hex;
+    ShowGroups ();
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow::on_actVIEW_Color_Standart_triggered()
+{
+    ColorSchema = ColorSchemas.at (0);
+    ShowColorSchema ();
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow::on_actVIEW_Color_jasha_triggered()
+{
+    ColorSchema = ColorSchemas.at (1);
+    ShowColorSchema ();
+}
+/*------------------------------------------------------------------*/
 /*         Считывание настроек отчёта из файла формата XML          */
 /*------------------------------------------------------------------*/
 void MainWindow::on_actFILE_Open_triggered()
@@ -700,6 +806,10 @@ void MainWindow::on_actFILE_Open_triggered()
 
     tmp_result = Settings.ReadFromXML (filename);
 
+for (int i=0; i<32; i++)
+{
+qDebug () << "After ReadXML: Bit" << i << ": Settings text = " << Settings.MaskDataOfBit[i].Text;
+}
     if (!tmp_result) return;
 
     CfgFileName  = filename;
@@ -765,14 +875,14 @@ void MainWindow::on_actFILE_Quit_triggered()
 }
 /*------------------------------------------------------------------*/
 
-
+/*
 #include <QFileDialog>
 #include <QXmlStreamWriter>
 #include <QXmlStreamReader>
 #include <QXmlStreamAttribute>
 #include <QMessageBox>
 #include <QFile>
-
+*/
 
 /*------------------------------------------------------------------*/
 /*
@@ -818,5 +928,68 @@ bool MainWindow :: SaveCfgFile (QString FileName)
     return true;
 }
 */
+
 /*------------------------------------------------------------------*/
+// !!!ATT!!! this fragment based on code from link:
+// http://qaru.site/questions/337587/selected-rowsline-in-qtableview-copy-to-qclipboard
+
+void MainWindow :: keyPressEvent (QKeyEvent * event)
+{
+    if(event->matches(QKeySequence::Copy) )
+    {
+//      copy();
+    }
+    else if(event->matches(QKeySequence::Paste) )
+    {
+//      paste();
+        PasteFromBuffer ();
+    }
+    else
+    {
+        QMainWindow :: keyPressEvent (event);
+    }
+}
+/*------------------------------------------------------------------*/
+// !!!ATT!!! this fragment based on code from link:
+// http://qaru.site/questions/337587/selected-rowsline-in-qtableview-copy-to-qclipboard
+void MainWindow :: PasteFromBuffer ()
+{
+    int     line_no   = -1;
+    QString line_text = "";
+
+    line_no = ui->tblBitmask->selectionModel()->currentIndex().row();
+    if (line_no <   0) line_no = 0;
+    if (line_no >= 32) line_no = 0;
+
+    QString buf_text = qApp->clipboard()->text();
+    int     buf_pos   =  0;
+    int     buf_size  =  buf_text.size();
+
+    bool exit_flag = false;
+    while (!exit_flag)
+    {
+        if (buf_pos >= buf_size)
+        {
+            // end of buffer
+            ui->tblBitmask->item(line_no, 4)->setText (line_text);
+            exit_flag = true;
+        }
+        else if (buf_text.at(buf_pos) == QChar('\n'))
+        {
+            // end of line
+            ui->tblBitmask->item(line_no, 4)->setText (line_text);
+            line_text = "";
+            line_no   ++  ;
+            if (line_no >= 32)           exit_flag = true;
+            if (buf_pos >= (buf_size-1)) exit_flag = true; // защита от лишнего \n перед концом буфера
+        }
+        else
+        {
+            line_text = line_text.append (buf_text.at(buf_pos));
+        }
+        buf_pos ++ ;
+    }
+}
+/*------------------------------------------------------------------*/
+
 

@@ -3,37 +3,37 @@
     <GroupDecHexBin show="true"/>
     <Group32Bits show="false" hex_show="false"/>
     <GroupBitmask show="true">
-        <Bit0 text="13313"/>
-        <Bit1 text="4454"/>
-        <Bit2 text="64654"/>
-        <Bit3 text=""/>
-        <Bit4 text=""/>
-        <Bit5 text=""/>
-        <Bit6 text=""/>
-        <Bit7 text=""/>
-        <Bit8 text=""/>
-        <Bit9 text=""/>
-        <Bit10 text=""/>
-        <Bit11 text=""/>
-        <Bit12 text=""/>
-        <Bit13 text=""/>
-        <Bit14 text=""/>
-        <Bit15 text=""/>
-        <Bit16 text=""/>
-        <Bit17 text=""/>
-        <Bit18 text=""/>
-        <Bit19 text=""/>
-        <Bit20 text=""/>
-        <Bit21 text=""/>
-        <Bit22 text=""/>
-        <Bit23 text=""/>
-        <Bit24 text=""/>
-        <Bit25 text=""/>
-        <Bit26 text=""/>
-        <Bit27 text=""/>
-        <Bit28 text=""/>
-        <Bit29 text=""/>
-        <Bit30 text=""/>
-        <Bit31 text=""/>
+        <Bit0 text="13313" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit1 text="4454" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit2 text="64654" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit3 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit4 text="5557" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit5 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit6 text="ON" backcolor0="#ffffff" textcolor0="#000000" backcolor1="#00ff7f" textcolor1="#000000"/>
+        <Bit7 text="OFF" backcolor0="#ffffff" textcolor0="#000000" backcolor1="#8f8f8f" textcolor1="#000000"/>
+        <Bit8 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit9 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit10 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit11 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit12 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit13 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit14 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit15 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit16 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit17 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit18 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit19 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit20 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit21 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit22 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit23 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit24 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit25 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit26 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit27 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit28 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit29 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit30 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
+        <Bit31 text="" backcolor0="#a0a0a4" textcolor0="#000000" backcolor1="#000080" textcolor1="#ffffff"/>
     </GroupBitmask>
 </BitmaskCfg>
