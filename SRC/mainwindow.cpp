@@ -6,6 +6,7 @@
 #include <QClipboard>
 #include <QMimeData>
 #include <QKeyEvent>
+#include <QMessageBox>
 
 /* глобальный список доступных цветовых схем */
 QVector <TColorSchema> ColorSchemas;
@@ -647,8 +648,8 @@ void MainWindow :: SlotMenuEnableDisable ()
     {
         ui->actFILE_Open   ->setEnabled (true );
         ui->actFILE_Save   ->setEnabled (false);
-        ui->actFILE_Save_As->setEnabled (false);
-//      ui->actFILE_Save_As->setEnabled (true );
+//      ui->actFILE_Save_As->setEnabled (false);
+        ui->actFILE_Save_As->setEnabled (true );
     }
     if      (CfgFileState == filestateNOT_OPENED_UNSAVED_CHANGES)
     {
@@ -794,6 +795,81 @@ void MainWindow::on_actFILE_Open_triggered()
 {
     bool tmp_result = false;
 
+    // ----- Предварительные действия перед открытием файла в зависимости от текущего состояния ----- 
+
+    if (0) ;
+
+    else if (CfgFileState == filestateNOT_OPENED_NO_CHANGES     )
+    {
+    }
+    else if (CfgFileState == filestateNOT_OPENED_UNSAVED_CHANGES)
+    {
+        // Предварительный запрос: сохранить ли имеющиеся изменения настроек в файле
+        QMessageBox::StandardButton reply;
+        reply = QMessageBox :: question (this, QString::fromUtf8("Attention"),
+                                         QString::fromUtf8("You have usaved changes in settings.\nDo You want to save current settings before open file?"),
+                                         QMessageBox::Yes | QMessageBox::Ignore | QMessageBox::Cancel);
+        if (0);
+        else if (reply == QMessageBox::Cancel) return;
+        else if (reply == QMessageBox::Ignore) ;
+        else if (reply == QMessageBox::Yes   )
+        {
+            // сохранение текущих настроек перед открытием файла
+
+            // Выбор имени для файла из которого будут считываться параметры отчёта
+            QString filename = QFileDialog::getSaveFileName
+                               (
+                                   this,
+                                   QString::fromUtf8 ("Select filename to save current changes"),
+                                   QDir::currentPath (),
+                                   "XML (*.xml);;All files (*.*)"
+                               );
+            if ((filename == "") || (filename == 0) || (filename == QString())) return;
+            // собственно сохранение текущих настроек в файл с выбранным именем
+            tmp_result = Settings.SaveToXML (filename);
+            if (!tmp_result)
+            {
+                QMessageBox :: warning (this, "Warning", "File save error!");
+                return;
+            }
+            CfgFileName  = filename;
+            CfgFileState = filestateOPENED_NO_CHANGES;
+        }
+    }
+    else if (CfgFileState == filestateOPENED_NO_CHANGES         )
+    {
+    }
+    else if (CfgFileState == filestateOPENED_UNSAVED_CHANGES    )
+    {
+        // Предварительный запрос: сохранить ли имеющиеся изменения настроек в файле
+        QMessageBox::StandardButton reply;
+        reply = QMessageBox :: question (this, QString::fromUtf8("Attention"),
+                                         QString::fromUtf8("You have usaved changes in settings.\nDo You want to save current settings before open file?"),
+                                         QMessageBox::Save | QMessageBox::Ignore | QMessageBox::Cancel);
+        if (0);
+        else if (reply == QMessageBox::Cancel) return;
+        else if (reply == QMessageBox::Ignore) ;
+        else if (reply == QMessageBox::Yes   )
+        {
+            // сохранение текущих настроек перед открытием файла
+
+            // Выбор имени для файла из которого будут считываться параметры отчёта
+            QString filename = CfgFileName;
+            if ((filename == "") || (filename == 0) || (filename == QString())) return;
+            // собственно сохранение текущих настроек в файл с выбранным именем
+            tmp_result = Settings.SaveToXML (filename);
+            if (!tmp_result)
+            {
+                QMessageBox :: warning (this, "Warning", "File save error!");
+                return;
+            }
+            CfgFileName  = filename;
+            CfgFileState = filestateOPENED_NO_CHANGES;
+        }
+    }
+
+    // ----- Открытие файла с настройками ----- 
+
     // Выбор имени для файла из которого будут считываться параметры отчёта
     QString filename = QFileDialog::getOpenFileName
                        (
@@ -803,21 +879,26 @@ void MainWindow::on_actFILE_Open_triggered()
                            "XML (*.xml);;All files (*.*)"
                        );
     if ((filename == "") || (filename == 0) || (filename == QString())) return;
-
+    
+    // считывание файла по выбранному имени
     tmp_result = Settings.ReadFromXML (filename);
-
-for (int i=0; i<32; i++)
-{
-qDebug () << "After ReadXML: Bit" << i << ": Settings text = " << Settings.MaskDataOfBit[i].Text;
-}
+    
     if (!tmp_result) return;
-
+    
     CfgFileName  = filename;
     CfgFileState = filestateOPENED_NO_CHANGES;
-
+    
+    // перерисовка с новыми настройками
     ShowValue  ();
     ShowGroups ();
     SlotMenuEnableDisable ();
+
+
+    // ----- DEBUG ----- 
+    for (int i=0; i<32; i++)
+    {
+        qDebug () << "After ReadXML: Bit" << i << ": Settings text = " << Settings.MaskDataOfBit[i].Text;
+    }
 }
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
@@ -993,3 +1074,8 @@ void MainWindow :: PasteFromBuffer ()
 /*------------------------------------------------------------------*/
 
 
+
+void MainWindow::on_actHELP_About_triggered()
+{
+    QMessageBox :: about (this, "About", "Bitmask 2.0");
+}

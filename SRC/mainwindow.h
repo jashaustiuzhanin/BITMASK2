@@ -99,6 +99,7 @@ private slots:
     void on_actVIEW_32_bits_HEX_fields_triggered();
     void on_actVIEW_Color_Standart_triggered();
     void on_actVIEW_Color_jasha_triggered();
+    void on_actHELP_About_triggered();
 };
 
 
