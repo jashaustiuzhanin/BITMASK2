@@ -2,6 +2,7 @@
 #define MASKDATA_H
 
 #include <QtCore>
+#include <QColor>
 
 typedef struct TMaskDataOfOneBit
 {

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BitmaskCfg>
+    <GroupDecHexBin show="false"/>
+    <Group32Bits show="false" hex_show="true"/>
+    <GroupBitmask show="true">
+        <Bit0 text="Не используется"/>
+        <Bit1 text=""/>
+        <Bit2 text="CFG - Расчетный параметр"/>
+        <Bit3 text="CFG - Имитация"/>
+        <Bit4 text="CFG - Инверсия"/>
+        <Bit5 text="CFG - Аварийное значение" backcolor1="#ff0000" textcolor1="#ffffff"/>
+        <Bit6 text="CFG - Задействовать аварию по параметру"/>
+        <Bit7 text="CFG - Значение при имитации" backcolor1="#ffff00" textcolor1="#000000"/>
+        <Bit8 text=""/>
+        <Bit9 text=""/>
+        <Bit10 text=""/>
+        <Bit11 text=""/>
+        <Bit12 text=""/>
+        <Bit13 text=""/>
+        <Bit14 text=""/>
+        <Bit15 text=""/>
+        <Bit16 text=""/>
+        <Bit17 text=""/>
+        <Bit18 text=""/>
+        <Bit19 text=""/>
+        <Bit20 text=""/>
+        <Bit21 text=""/>
+        <Bit22 text=""/>
+        <Bit23 text=""/>
+        <Bit24 text=""/>
+        <Bit25 text=""/>
+        <Bit26 text=""/>
+        <Bit27 text=""/>
+        <Bit28 text=""/>
+        <Bit29 text=""/>
+        <Bit30 text=""/>
+        <Bit31 text="Не используется"/>
+    </GroupBitmask>
+    <MainToolBar show="true"/>
+</BitmaskCfg>

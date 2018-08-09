@@ -45,14 +45,23 @@ SOURCES +=\
     ../../SRC/mainwindow.cpp \
     ../../SRC/bmqspinbox.cpp \
     ../../SRC/dlgmaskdatastyle.cpp \
-    ../../SRC/settings.cpp
+    ../../SRC/settings.cpp \
+    ../../SRC/colorschemas_init.cpp \
+    ../../SRC/qtablewidgetwithcopypaste.cpp \
+    ../../SRC/thexspinbox.cpp \
+    ../../SRC/tspinbox64.cpp
 
 HEADERS  += \
     ../../SRC/mainwindow.h \
     ../../SRC/bmqspinbox.h \
     ../../SRC/dlgmaskdatastyle.h \
     ../../SRC/maskdata.h \
-    ../../SRC/settings.h
+    ../../SRC/settings.h \
+    ../../SRC/colorschema.h \
+    ../../SRC/qtablewidgetwithcopypaste.h \
+    ../../SRC/thexspinbox.h \
+    ../../SRC/tspinbox64.h \
+    ../../SRC/version.h
 
 FORMS    += \
     ../../SRC/mainwindow.ui \
@@ -64,3 +73,8 @@ DEPENDPATH  += ../../SRC
 
 RESOURCES += \
     ../../SRC/res.qrc
+
+#RC_FILE += ../../SRC/mainico.rc
+win32 {
+RC_FILE += ../../SRC/appinfo.rc
+}

@@ -1363,6 +1363,7 @@ QHeaderView::section {
     <addaction name="actFILE_Open"/>
     <addaction name="actFILE_Save"/>
     <addaction name="actFILE_Save_As"/>
+    <addaction name="actFILE_Close"/>
     <addaction name="actFILE_Quit"/>
    </widget>
    <widget class="QMenu" name="menuView">
@@ -1397,14 +1398,16 @@ QHeaderView::section {
     <bool>false</bool>
    </attribute>
    <addaction name="actFILE_Open"/>
+   <addaction name="actFILE_Close"/>
    <addaction name="actFILE_Save"/>
    <addaction name="actFILE_Save_As"/>
+   <addaction name="actFILE_Quit"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actFILE_Open">
    <property name="icon">
     <iconset resource="res.qrc">
-     <normaloff>:/PICS/db_open_2b.png</normaloff>:/PICS/db_open_2b.png</iconset>
+     <normaloff>:/PICS/FILE_Open_m.png</normaloff>:/PICS/FILE_Open_m.png</iconset>
    </property>
    <property name="text">
     <string>&amp;Open</string>
@@ -1416,7 +1419,7 @@ QHeaderView::section {
   <action name="actFILE_Save">
    <property name="icon">
     <iconset resource="res.qrc">
-     <normaloff>:/PICS/Ok_2.png</normaloff>:/PICS/Ok_2.png</iconset>
+     <normaloff>:/PICS/FILE_Save_m.png</normaloff>:/PICS/FILE_Save_m.png</iconset>
    </property>
    <property name="text">
     <string>&amp;Save</string>
@@ -1428,7 +1431,7 @@ QHeaderView::section {
   <action name="actFILE_Save_As">
    <property name="icon">
     <iconset resource="res.qrc">
-     <normaloff>:/PICS/View_m.png</normaloff>:/PICS/View_m.png</iconset>
+     <normaloff>:/PICS/FILE_SaveAs_m.png</normaloff>:/PICS/FILE_SaveAs_m.png</iconset>
    </property>
    <property name="text">
     <string>Save &amp;As</string>
@@ -1511,6 +1514,15 @@ QHeaderView::section {
   <action name="actVIEW_Color_jasha">
    <property name="text">
     <string>Color jasha</string>
+   </property>
+  </action>
+  <action name="actFILE_Close">
+   <property name="icon">
+    <iconset resource="res.qrc">
+     <normaloff>:/PICS/FILE_Close_m.png</normaloff>:/PICS/FILE_Close_m.png</iconset>
+   </property>
+   <property name="text">
+    <string>Close</string>
    </property>
   </action>
  </widget>

@@ -10,13 +10,15 @@
 #include "settings.h"
 
 /*------------------------------------------------------------------*/
-void TSettings :: SetDefault ()
+void TSettingsData :: SetDefault ()
 {
-    Visible_GroupDecHexBin = true ;
-    Visible_Group32Bits    = true ;
-    Visible_GroupBitmask   = false;
+    Visible_GroupDecHexBin  = true ;
+    Visible_Group32Bits     = true ;
+    Visible_GroupBitmask    = false;
 
-    Visible_Group32Bits_Hex = true;
+    Visible_Group32Bits_Hex = true ;
+
+    Visible_MainToolBar     = true ;
 
     for (int i=0; i<32; i++)
     {
@@ -33,10 +35,12 @@ void TSettings :: SetDefault ()
 
         MaskDataOfBit [i].Text = "";
     }
+
+    ColorSchemaName = "Standart";
 }
 
 /*------------------------------------------------------------------*/
-bool TSettings :: SaveToXML   (QString FileName)
+bool TSettingsData :: SaveToXML   (QString FileName)
 {
     bool  tmp_result;
 
@@ -67,6 +71,16 @@ bool TSettings :: SaveToXML   (QString FileName)
         tmp_result = SaveToXML_GroupBitmask (&xml_writer);
         if (!tmp_result) {file.close (); return false;}
     }
+    // сохраняются настройки главного ToolBar-а
+    {
+        tmp_result = SaveToXML_MainToolBar (&xml_writer);
+        if (!tmp_result) {file.close (); return false;}
+    }
+    // сохраняются настройки выбранной цветовой схемы
+    {
+        tmp_result = SaveToXML_ColorSchema (&xml_writer);
+        if (!tmp_result) {file.close (); return false;}
+    }
 
     /* Закрывается тег первого элемента */
     xml_writer.writeEndElement ();
@@ -78,7 +92,7 @@ bool TSettings :: SaveToXML   (QString FileName)
 }
 
 /*------------------------------------------------------------------*/
-bool TSettings :: ReadFromXML (QString FileName)
+bool TSettingsData :: ReadFromXML (QString FileName)
 {
     if ((FileName == "") || (FileName == 0) || (FileName == QString())) return false;
 
@@ -132,6 +146,22 @@ bool TSettings :: ReadFromXML (QString FileName)
                 if (!tmp_result) {file.close (); return false;}
             }
 
+            // Найден тег начала данных, содержащих настройки главного ToolBar-а
+            if (xml_reader.name () == "MainToolBar")
+            {
+                // считываются настройки группы 32 bits
+                tmp_result = ReadFromXML_MainToolBar    (&xml_reader);
+                if (!tmp_result) {file.close (); return false;}
+            }
+
+            // Найден тег начала данных, содержащих настройки выбранной цветовой схемы
+            if (xml_reader.name () == "ColorSchema")
+            {
+                // считываются настройки группы 32 bits
+                tmp_result = ReadFromXML_ColorSchema    (&xml_reader);
+                if (!tmp_result) {file.close (); return false;}
+            }
+
 
         } // end if isStartElement
 
@@ -141,173 +171,13 @@ bool TSettings :: ReadFromXML (QString FileName)
 
     file.close (); // Закрытие файла
 
-
-#ifdef __DELETED_FRAGMENT__
-        /* Проверка, является ли данный элемент началом тега */
-        if (xml_reader.isStartElement ())
-        {
-            bool already_found = true;
-
-            // Считывается тег первого элемента
-            if (xml_reader.name () == "BitmaskParams")
-            {
-            }
-
-            // Считывается тег с именем файла, содержащего отчёт
-            else if (xml_reader.name () == "ReportFilePath")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {ReportFilePath = (attr.value().toString ());}
-                }
-            }
-            // Считывается тег с названием организации
-            else if (xml_reader.name () == "OrganizationName")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {OrganizationName = (attr.value().toString ());}
-                }
-            }
-            // Считывается тег с именем файла, содержащего логотип
-            else if (xml_reader.name () == "LogoImagePath")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {LogoImagePath = (attr.value().toString ());}
-                }
-            }
-            // Считывается тег с Названием документа отчёта
-            else if (xml_reader.name () == "Title1")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {Title1 = (attr.value().toString ());}
-                }
-            }
-            // Считывается тег с дополнительным заголовком
-            else if (xml_reader.name () == "Title2")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {Title2 = (attr.value().toString ());}
-                }
-            }
-            // Считывается тег с Надписью над таблицей
-            else if (xml_reader.name () == "TableOverHat")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {TableOverHat = (attr.value().toString ());}
-                }
-            }
-
-            // Считывается тег со значением поля Шахта, скважина, глубина и т.д.
-            else if (xml_reader.name () == "Shachta")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {Shachta = (attr.value().toString ());}
-                }
-            }
-
-
-            // Считывается тег со значением поля Подпись 1
-            else if (xml_reader.name () == "Podpis1")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {Podpis1 = (attr.value().toString ());}
-                }
-            }
-            // Считывается тег со значением поля Подпись 2
-            else if (xml_reader.name () == "Podpis2")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {Podpis2 = (attr.value().toString ());}
-                }
-            }
-            // Считывается тег со значением поля Подпись 3
-            else if (xml_reader.name () == "Podpis3")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {Podpis3 = (attr.value().toString ());}
-                }
-            }
-            // Считывается тег со значением поля Телефон 1
-            else if (xml_reader.name () == "Tel1")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {Tel1 = (attr.value().toString ());}
-                }
-            }
-            // Считывается тег со значением поля Телефон 2
-            else if (xml_reader.name () == "Tel2")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {Tel2 = (attr.value().toString ());}
-                }
-            }
-            // Считывается тег со значением поля EMail
-            else if (xml_reader.name () == "EMail")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {EMail = (attr.value().toString ());}
-                }
-            }
-            // Считывается тег со значением поля Site
-            else if (xml_reader.name () == "Site")
-            {
-                // считываются все атрибуты и перебираются для выделения тех, которые нужны
-                foreach (const QXmlStreamAttribute &attr, xml_reader.attributes())
-                {
-                    // получение значений, когда найдены нужные атрибуты
-                    if (attr.name().toString() == "value") {Site = (attr.value().toString ());}
-                }
-            }
-
-
-        }
-#endif /*__DELETED_FRAGMENT__*/
-
     return true;
 }
 
 /*------------------------------------------------------------------*/
 /*               считываются настройки группы DecHexBin             */
 /*------------------------------------------------------------------*/
-bool TSettings :: ReadFromXML_GroupDecHexBin (QXmlStreamReader *pXmlReader)
+bool TSettingsData :: ReadFromXML_GroupDecHexBin (QXmlStreamReader *pXmlReader)
 {
     bool exit_flag = false;
 
@@ -323,7 +193,7 @@ bool TSettings :: ReadFromXML_GroupDecHexBin (QXmlStreamReader *pXmlReader)
 /*------------------------------------------------------------------*/
 /*               считываются настройки группы 32 Bits               */
 /*------------------------------------------------------------------*/
-bool TSettings :: ReadFromXML_Group32Bits (QXmlStreamReader *pXmlReader)
+bool TSettingsData :: ReadFromXML_Group32Bits (QXmlStreamReader *pXmlReader)
 {
     bool exit_flag = false;
 
@@ -343,7 +213,7 @@ bool TSettings :: ReadFromXML_Group32Bits (QXmlStreamReader *pXmlReader)
 /*------------------------------------------------------------------*/
 /*               считываются настройки группы Bitmask               */
 /*------------------------------------------------------------------*/
-bool TSettings :: ReadFromXML_GroupBitmask (QXmlStreamReader *pXmlReader)
+bool TSettingsData :: ReadFromXML_GroupBitmask (QXmlStreamReader *pXmlReader)
 {
     bool exit_flag = false;
 
@@ -403,9 +273,41 @@ bool TSettings :: ReadFromXML_GroupBitmask (QXmlStreamReader *pXmlReader)
     return true;
 }
 /*------------------------------------------------------------------*/
+/*              считываются настройки главного ToolBar-а            */
+/*------------------------------------------------------------------*/
+bool TSettingsData :: ReadFromXML_MainToolBar (QXmlStreamReader *pXmlReader)
+{
+    bool exit_flag = false;
+
+    // считываются все атрибуты и перебираются для считывания тех, которые нужны
+    foreach (const QXmlStreamAttribute &attr, pXmlReader->attributes())
+    {
+        // получение значений, когда найдены нужные атрибуты
+        if (attr.name().toString() == "show") {Visible_MainToolBar = (attr.value().toString () == "true");}
+    }
+
+    return true;
+}
+/*------------------------------------------------------------------*/
+/*          считываются настройки выбранной цветовой схемы          */
+/*------------------------------------------------------------------*/
+bool TSettingsData :: ReadFromXML_ColorSchema (QXmlStreamReader *pXmlReader)
+{
+    bool exit_flag = false;
+
+    // считываются все атрибуты и перебираются для считывания тех, которые нужны
+    foreach (const QXmlStreamAttribute &attr, pXmlReader->attributes())
+    {
+        // получение значений, когда найдены нужные атрибуты
+        if (attr.name().toString() == "name") {ColorSchemaName = attr.value().toString ();}
+    }
+
+    return true;
+}
+/*------------------------------------------------------------------*/
 /*              Записываются настройки группы DecHexBin             */
 /*------------------------------------------------------------------*/
-bool TSettings :: SaveToXML_GroupDecHexBin (QXmlStreamWriter *pXmlWriter)
+bool TSettingsData :: SaveToXML_GroupDecHexBin (QXmlStreamWriter *pXmlWriter)
 {
     // создаётся общий тег
     pXmlWriter->writeStartElement ("GroupDecHexBin");
@@ -422,7 +324,7 @@ bool TSettings :: SaveToXML_GroupDecHexBin (QXmlStreamWriter *pXmlWriter)
 /*------------------------------------------------------------------*/
 /*              Записываются настройки группы 32 Bits               */
 /*------------------------------------------------------------------*/
-bool TSettings :: SaveToXML_Group32Bits (QXmlStreamWriter *pXmlWriter)
+bool TSettingsData :: SaveToXML_Group32Bits (QXmlStreamWriter *pXmlWriter)
 {
     // создаётся общий тег
     pXmlWriter->writeStartElement ("Group32Bits");
@@ -439,7 +341,7 @@ bool TSettings :: SaveToXML_Group32Bits (QXmlStreamWriter *pXmlWriter)
 /*------------------------------------------------------------------*/
 /*              Записываются настройки группы Bitmask               */
 /*------------------------------------------------------------------*/
-bool TSettings :: SaveToXML_GroupBitmask (QXmlStreamWriter *pXmlWriter)
+bool TSettingsData :: SaveToXML_GroupBitmask (QXmlStreamWriter *pXmlWriter)
 {
     // создаётся общий тег
     pXmlWriter->writeStartElement ("GroupBitmask");
@@ -467,4 +369,101 @@ bool TSettings :: SaveToXML_GroupBitmask (QXmlStreamWriter *pXmlWriter)
     return true;
 }
 /*------------------------------------------------------------------*/
+/*             Записываются настройки главного ToolBar-a            */
+/*------------------------------------------------------------------*/
+bool TSettingsData :: SaveToXML_MainToolBar (QXmlStreamWriter *pXmlWriter)
+{
+    // создаётся общий тег
+    pXmlWriter->writeStartElement ("MainToolBar");
 
+    // записываются атрибуты общего тега
+    pXmlWriter->writeAttribute    ("show", (Visible_MainToolBar ? "true" : "false"));
+
+    // общий тег закрывается
+    pXmlWriter->writeEndElement   ();
+
+
+    return true;
+}
+/*------------------------------------------------------------------*/
+/*          Записываются настройки выбранной цветовой схемы         */
+/*------------------------------------------------------------------*/
+bool TSettingsData :: SaveToXML_ColorSchema (QXmlStreamWriter *pXmlWriter)
+{
+    // создаётся общий тег
+    pXmlWriter->writeStartElement ("ColorSchema");
+
+    // записываются атрибуты общего тега
+    pXmlWriter->writeAttribute    ("name", ColorSchemaName);
+
+    // общий тег закрывается
+    pXmlWriter->writeEndElement   ();
+
+
+    return true;
+}
+/*------------------------------------------------------------------*/
+
+
+
+
+
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+bool TSettings :: SaveToXML   (QString FileName)
+{
+    bool result;
+
+    result = CurrentData.SaveToXML (FileName);
+
+    if (!result) return false;
+
+    NoChangedData = CurrentData;
+    emit SignalTouched ();
+
+    return true;
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+bool TSettings :: ReadFromXML   (QString FileName)
+{
+    bool result;
+
+    result = CurrentData.ReadFromXML (FileName);
+
+    if (!result) return false;
+
+    NoChangedData = CurrentData;
+    emit SignalTouched ();
+
+    return true;
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+bool TSettings :: IsChanged ()
+{
+//  return (CurrentData != NoChangedData);
+
+    if (CurrentData.Visible_GroupDecHexBin  != NoChangedData.Visible_GroupDecHexBin ) return true ;
+    if (CurrentData.Visible_Group32Bits     != NoChangedData.Visible_Group32Bits    ) return true ;
+    if (CurrentData.Visible_GroupBitmask    != NoChangedData.Visible_GroupBitmask   ) return true ;
+    if (CurrentData.Visible_Group32Bits_Hex != NoChangedData.Visible_Group32Bits_Hex) return true ;
+    if (CurrentData.Visible_MainToolBar     != NoChangedData.Visible_MainToolBar    ) return true ;
+
+    for (int i=0; i<32; i++)
+    {
+        if (CurrentData.MaskDataOfBit[i].TextColorState0 != NoChangedData.MaskDataOfBit[i].TextColorState0) return true ;
+        if (CurrentData.MaskDataOfBit[i].BackColorState0 != NoChangedData.MaskDataOfBit[i].BackColorState0) return true ;
+        if (CurrentData.MaskDataOfBit[i].TextColorState1 != NoChangedData.MaskDataOfBit[i].TextColorState1) return true ;
+        if (CurrentData.MaskDataOfBit[i].BackColorState1 != NoChangedData.MaskDataOfBit[i].BackColorState1) return true ;
+
+        if (CurrentData.MaskDataOfBit[i].Text            != NoChangedData.MaskDataOfBit[i].Text           ) return true ;
+    }
+
+    if (CurrentData.ColorSchemaName != NoChangedData.ColorSchemaName) return true ;
+
+    return false;
+}
+
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/

@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QSpinBox>
+#include <QLabel>
 #include "thexspinbox.h"
 #include "tspinbox64.h"
 #include "bmqspinbox.h"
@@ -70,11 +71,17 @@ private:
 
     void PasteFromBuffer ();
 
+    QLabel *pStatusLabel;
+    QString MainTitle;
+
+    bool SaveCurrSettingsBeforeNextAction (QString InformTextTail);
+
 private slots:
     void ShowValue ();
     void SlotMenuEnableDisable ();
     void ShowGroups ();
     void ShowColorSchema ();
+    void ShowStatus ();
 
     void SlotOnSpnDecimal     ();
     void SlotOnSpnHexadecimal ();
@@ -88,6 +95,8 @@ private slots:
     void SlotOnBitmaskChkBox  ();
     void SlotOnBitmaskText    ();
 
+    void SlotOnSettingsTouched ();
+
     void on_actVIEW_DEC_HEX_BIN_triggered();
     void on_actVIEW_32_bits_triggered();
     void on_actVIEW_Bitmask_triggered();
@@ -100,6 +109,7 @@ private slots:
     void on_actVIEW_Color_Standart_triggered();
     void on_actVIEW_Color_jasha_triggered();
     void on_actHELP_About_triggered();
+    void on_actFILE_Close_triggered();
 };
 
 

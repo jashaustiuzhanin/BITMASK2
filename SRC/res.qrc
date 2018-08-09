@@ -21,5 +21,13 @@
         <file>PICS/Right_m.png</file>
         <file>PICS/View_m.png</file>
         <file>PICS/Warning_m.png</file>
+        <file>PICS/FILE_Close.png</file>
+        <file>PICS/FILE_Close_m.png</file>
+        <file>PICS/FILE_Open.png</file>
+        <file>PICS/FILE_Open_m.png</file>
+        <file>PICS/FILE_Save.png</file>
+        <file>PICS/FILE_Save_m.png</file>
+        <file>PICS/FILE_SaveAs.png</file>
+        <file>PICS/FILE_SaveAs_m.png</file>
     </qresource>
 </RCC>

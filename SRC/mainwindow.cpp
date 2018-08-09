@@ -7,6 +7,7 @@
 #include <QMimeData>
 #include <QKeyEvent>
 #include <QMessageBox>
+#include "version.h"
 
 /* глобальный список доступных цветовых схем */
 QVector <TColorSchema> ColorSchemas;
@@ -31,8 +32,13 @@ MainWindow :: MainWindow (QWidget *parent) :
 {
     ui->setupUi (this);
 
-    setWindowTitle ("BitMask 2.0");
+    MainTitle = "BitMask 2.0";
+    setWindowTitle (MainTitle);
     setWindowIcon  (QIcon (":/PICS/bitmask20.png"));
+
+    // отображение сообщения в статусной строке
+    pStatusLabel = new QLabel (this);
+    this->statusBar ()->addPermanentWidget (pStatusLabel);
 
     ui->spnDecimal    ->SetMode (BMQSpinBox::modeDECIMAL    );
     ui->spnDecimal    ->SetBitsCount_32 ();
@@ -245,10 +251,13 @@ MainWindow :: MainWindow (QWidget *parent) :
 
     QObject :: connect (ui->tblBitmask, SIGNAL(itemChanged(QTableWidgetItem *)), this, SLOT(SlotOnBitmaskText()));
 
+    QObject :: connect (&Settings, SIGNAL(SignalTouched()), this, SLOT(SlotOnSettingsTouched()));
+
     ShowColorSchema ();
     SlotMenuEnableDisable ();
     ShowValue ();
     ShowGroups ();
+    ShowStatus ();
 
     QRect r = geometry ();
 //  r.setHeight (10);
@@ -389,6 +398,12 @@ void MainWindow :: SlotOnBitmaskClicked (int Row, int Column)
 {
     qDebug () << "----- 1 ----- : row=" << Row << ", Column=" << Column;
 
+    TMaskDataOfOneBit mdata;
+    mdata.TextColorState0 = Settings.GetTextColorSt0 (Row);
+    mdata.BackColorState0 = Settings.GetBackColorSt0 (Row);
+    mdata.TextColorState1 = Settings.GetTextColorSt1 (Row);
+    mdata.BackColorState1 = Settings.GetBackColorSt1 (Row);
+
     // если клик был произведён на столбце с выбором цвета для состояния 0,
     // то производим выбор цвета
     if (Column == 0)
@@ -400,9 +415,17 @@ void MainWindow :: SlotOnBitmaskClicked (int Row, int Column)
 */
         DlgMaskDataStyle *p_dlg = new DlgMaskDataStyle (this);
         int dlg_result;
-        p_dlg->SetData (Row, Settings.MaskDataOfBit[Row]);
+        p_dlg->SetData (Row, mdata);
         dlg_result = p_dlg->exec ();
-        if (dlg_result == QDialog::Accepted) Settings.MaskDataOfBit[Row] = p_dlg->GetData ();
+        if (dlg_result == QDialog::Accepted)
+        {
+//          Settings.MaskDataOfBit[Row] = p_dlg->GetData ();
+            mdata = p_dlg->GetData ();
+            Settings.SetTextColorSt0 (Row, mdata.TextColorState0);
+            Settings.SetBackColorSt0 (Row, mdata.BackColorState0);
+            Settings.SetTextColorSt1 (Row, mdata.TextColorState1);
+            Settings.SetBackColorSt1 (Row, mdata.BackColorState1);
+        }
         ShowValue ();
     }
     // если клик был произведён на столбце с выбором цвета для состояния 1,
@@ -415,9 +438,17 @@ void MainWindow :: SlotOnBitmaskClicked (int Row, int Column)
 */
         DlgMaskDataStyle *p_dlg = new DlgMaskDataStyle (this);
         int dlg_result;
-        p_dlg->SetData (Row, Settings.MaskDataOfBit[Row]);
+        p_dlg->SetData (Row, mdata);
         dlg_result = p_dlg->exec ();
-        if (dlg_result == QDialog::Accepted) Settings.MaskDataOfBit[Row] = p_dlg->GetData ();
+        if (dlg_result == QDialog::Accepted)
+        {
+//          Settings.MaskDataOfBit[Row] = p_dlg->GetData ();
+            mdata = p_dlg->GetData ();
+            Settings.SetTextColorSt0 (Row, mdata.TextColorState0);
+            Settings.SetBackColorSt0 (Row, mdata.BackColorState0);
+            Settings.SetTextColorSt1 (Row, mdata.TextColorState1);
+            Settings.SetBackColorSt1 (Row, mdata.BackColorState1);
+        }
         ShowValue ();
     }
 
@@ -481,7 +512,9 @@ void MainWindow :: SlotOnBitmaskText ()
     for (int i=0; i<32; i++)
     {
         QString text = ui->tblBitmask->item(i, 4)->text();
-        Settings.MaskDataOfBit[i].Text = text;
+//      Settings.MaskDataOfBit[i].Text = text;
+//      Settings.SetText (i, text);
+        if (text != Settings.GetText (i)) Settings.SetText (i, text);
     }
 }
 
@@ -619,8 +652,10 @@ void MainWindow :: ShowValue ()
             item4->setForeground (QBrush (text_color_st0));
         }
         QObject :: disconnect (ui->tblBitmask, SIGNAL(itemChanged(QTableWidgetItem *)), this, SLOT(SlotOnBitmaskText()));
-        item4->setText (Settings.MaskDataOfBit[i].Text);
-qDebug () << "Bit" << i << ": item4 text = " << item4->text() << ", Settings text = " << Settings.MaskDataOfBit[i].Text;
+//      item4->setText (Settings.MaskDataOfBit[i].Text);
+        item4->setText (Settings.GetText (i));
+//qDebug () << "Bit" << i << ": item4 text = " << item4->text() << ", Settings text = " << Settings.MaskDataOfBit[i].Text;
+qDebug () << "Bit" << i << ": item4 text = " << item4->text() << ", Settings text = " << Settings.GetText (i);
         QObject :: connect    (ui->tblBitmask, SIGNAL(itemChanged(QTableWidgetItem *)), this, SLOT(SlotOnBitmaskText()));
 
         // Раскраска ячеек с выбранными цветами лля окрашивания
@@ -650,24 +685,28 @@ void MainWindow :: SlotMenuEnableDisable ()
         ui->actFILE_Save   ->setEnabled (false);
 //      ui->actFILE_Save_As->setEnabled (false);
         ui->actFILE_Save_As->setEnabled (true );
+        ui->actFILE_Close  ->setEnabled (false);
     }
     if      (CfgFileState == filestateNOT_OPENED_UNSAVED_CHANGES)
     {
         ui->actFILE_Open   ->setEnabled (true );
         ui->actFILE_Save   ->setEnabled (false);
         ui->actFILE_Save_As->setEnabled (true );
+        ui->actFILE_Close  ->setEnabled (false);
     }
     else if (CfgFileState == filestateOPENED_NO_CHANGES)
     {
         ui->actFILE_Open   ->setEnabled (true );
         ui->actFILE_Save   ->setEnabled (false);
         ui->actFILE_Save_As->setEnabled (true );
+        ui->actFILE_Close  ->setEnabled (true );
     }
     else if (CfgFileState == filestateOPENED_UNSAVED_CHANGES)
     {
         ui->actFILE_Open   ->setEnabled (true );
         ui->actFILE_Save   ->setEnabled (true );
         ui->actFILE_Save_As->setEnabled (true );
+        ui->actFILE_Close  ->setEnabled (true );
     }
 
 }
@@ -676,9 +715,10 @@ void MainWindow :: SlotMenuEnableDisable ()
 void MainWindow :: ShowGroups ()
 {
     // !!!ATT!!! temporary block for right working of adjustSize
-    bool temp = ui->tbrMainToolbar->isVisible();
-    ui->tbrMainToolbar->setVisible (!temp);
-
+//  bool temp = ui->tbrMainToolbar->isVisible();
+//  ui->tbrMainToolbar->setVisible (!temp);
+    ui->tbrMainToolbar->setVisible (true );
+/*
     ui->spnByte0_HexLeft ->setVisible (Settings.Visible_Group32Bits_Hex);
     ui->spnByte0_HexRight->setVisible (Settings.Visible_Group32Bits_Hex);
     ui->spnByte1_HexLeft ->setVisible (Settings.Visible_Group32Bits_Hex);
@@ -691,12 +731,29 @@ void MainWindow :: ShowGroups ()
     ui->grpDEC_HEX_BIN->setVisible (Settings.Visible_GroupDecHexBin);
     ui->grp32_bits    ->setVisible (Settings.Visible_Group32Bits   );
     ui->grpBitmask    ->setVisible (Settings.Visible_GroupBitmask  );
+*/
+    ui->spnByte0_HexLeft ->setVisible (Settings.GetVisible_Group32Bits_Hex());
+    ui->spnByte0_HexRight->setVisible (Settings.GetVisible_Group32Bits_Hex());
+    ui->spnByte1_HexLeft ->setVisible (Settings.GetVisible_Group32Bits_Hex());
+    ui->spnByte1_HexRight->setVisible (Settings.GetVisible_Group32Bits_Hex());
+    ui->spnByte2_HexLeft ->setVisible (Settings.GetVisible_Group32Bits_Hex());
+    ui->spnByte2_HexRight->setVisible (Settings.GetVisible_Group32Bits_Hex());
+    ui->spnByte3_HexLeft ->setVisible (Settings.GetVisible_Group32Bits_Hex());
+    ui->spnByte3_HexRight->setVisible (Settings.GetVisible_Group32Bits_Hex());
+
+    ui->grpDEC_HEX_BIN->setVisible (Settings.GetVisible_GroupDecHexBin());
+    ui->grp32_bits    ->setVisible (Settings.GetVisible_Group32Bits   ());
+    ui->grpBitmask    ->setVisible (Settings.GetVisible_GroupBitmask  ());
+
+    ui->tbrMainToolbar->setVisible (true );
     adjustSize ();
 
     // !!!ATT!!! temporary block for right working of adjustSize
-    ui->tbrMainToolbar->setVisible ( temp);
+//  ui->tbrMainToolbar->setVisible ( temp);
+    ui->tbrMainToolbar->setVisible (false);
     adjustSize ();
     resize(sizeHint());
+    ui->tbrMainToolbar->setVisible (Settings.GetVisible_MainToolBar());
 
     ui->actVIEW_DEC_HEX_BIN->setChecked (ui->grpDEC_HEX_BIN->isVisible ());
     ui->actVIEW_32_bits    ->setChecked (ui->grp32_bits    ->isVisible ());
@@ -706,6 +763,41 @@ void MainWindow :: ShowGroups ()
 //  resize(sizeHint());
 }
 
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow :: ShowStatus ()
+{
+    // отображение "*" перед основным текстом в заголовке если есть
+    // несохранённые изменения
+    QString tmp_str;
+    tmp_str = MainTitle;
+
+    if ((CfgFileState == filestateNOT_OPENED_UNSAVED_CHANGES) || 
+        (CfgFileState == filestateOPENED_UNSAVED_CHANGES    )  )
+    {
+        tmp_str = "* " + MainTitle;
+    }
+//  setWindowTitle (MainTitle);
+    setWindowTitle (tmp_str);
+
+    // отображение имени открытого файла в строке статуса
+    tmp_str = "";
+    if ((CfgFileState == filestateNOT_OPENED_UNSAVED_CHANGES) || 
+        (CfgFileState == filestateOPENED_UNSAVED_CHANGES    )  )
+    {
+        tmp_str = "unsaved changes. ";
+    }
+    if ((CfgFileState == filestateOPENED_NO_CHANGES         ) || 
+        (CfgFileState == filestateOPENED_UNSAVED_CHANGES    )  )
+    {
+        tmp_str = tmp_str + " file \"" + CfgFileName + "\" is opened";
+    }
+    else
+    {
+        tmp_str = tmp_str + " no file opened";
+    }
+    pStatusLabel->setText (tmp_str);
+}
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
 QSize MainWindow :: sizeHint ()
@@ -721,28 +813,32 @@ QSize MainWindow :: sizeHint ()
 QColor MainWindow :: CurrTextColorSt0 (int BitNo)
 {
     QColor text_color_st0 = QColor ();
-    if ((BitNo >= 0) && (BitNo < 32)) text_color_st0 = Settings.MaskDataOfBit[BitNo].TextColorState0;
+//  if ((BitNo >= 0) && (BitNo < 32)) text_color_st0 = Settings.MaskDataOfBit[BitNo].TextColorState0;
+    text_color_st0 = Settings.GetTextColorSt0 (BitNo);
     if (!text_color_st0.isValid()   ) text_color_st0 = ColorSchema.TextColorSt0;
     return text_color_st0;
 }
 QColor MainWindow :: CurrBackColorSt0 (int BitNo)
 {
     QColor back_color_st0 = QColor ();
-    if ((BitNo >= 0) && (BitNo < 32)) back_color_st0 = Settings.MaskDataOfBit[BitNo].BackColorState0;
+//  if ((BitNo >= 0) && (BitNo < 32)) back_color_st0 = Settings.MaskDataOfBit[BitNo].BackColorState0;
+    back_color_st0 = Settings.GetBackColorSt0 (BitNo);
     if (!back_color_st0.isValid()   ) back_color_st0 = ColorSchema.BackColorSt0;
     return back_color_st0;
 }
 QColor MainWindow :: CurrTextColorSt1 (int BitNo)
 {
     QColor text_color_st1 = QColor ();
-    if ((BitNo >= 0) && (BitNo < 32)) text_color_st1 = Settings.MaskDataOfBit[BitNo].TextColorState1;
+//  if ((BitNo >= 0) && (BitNo < 32)) text_color_st1 = Settings.MaskDataOfBit[BitNo].TextColorState1;
+    text_color_st1 = Settings.GetTextColorSt1 (BitNo);
     if (!text_color_st1.isValid()   ) text_color_st1 = ColorSchema.TextColorSt1;
     return text_color_st1;
 }
 QColor MainWindow :: CurrBackColorSt1 (int BitNo)
 {
     QColor back_color_st1 = QColor ();
-    if ((BitNo >= 0) && (BitNo < 32)) back_color_st1 = Settings.MaskDataOfBit[BitNo].BackColorState1;
+//  if ((BitNo >= 0) && (BitNo < 32)) back_color_st1 = Settings.MaskDataOfBit[BitNo].BackColorState1;
+    back_color_st1 = Settings.GetBackColorSt1 (BitNo);
     if (!back_color_st1.isValid()   ) back_color_st1 = ColorSchema.BackColorSt1;
     return back_color_st1;
 }
@@ -750,28 +846,32 @@ QColor MainWindow :: CurrBackColorSt1 (int BitNo)
 /*------------------------------------------------------------------*/
 void MainWindow :: on_actVIEW_DEC_HEX_BIN_triggered ()
 {
-    Settings.Visible_GroupDecHexBin = !Settings.Visible_GroupDecHexBin;
+//  Settings.Visible_GroupDecHexBin = !Settings.Visible_GroupDecHexBin;
+    Settings.SetVisible_GroupDecHexBin (!Settings.GetVisible_GroupDecHexBin());
     ShowGroups ();
 }
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
 void MainWindow :: on_actVIEW_32_bits_triggered ()
 {
-    Settings.Visible_Group32Bits = !Settings.Visible_Group32Bits;
+//  Settings.Visible_Group32Bits = !Settings.Visible_Group32Bits;
+    Settings.SetVisible_Group32Bits (!Settings.GetVisible_Group32Bits());
     ShowGroups ();
 }
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
 void MainWindow :: on_actVIEW_Bitmask_triggered ()
 {
-    Settings.Visible_GroupBitmask = !Settings.Visible_GroupBitmask;
+//  Settings.Visible_GroupBitmask = !Settings.Visible_GroupBitmask;
+    Settings.SetVisible_GroupBitmask (!Settings.GetVisible_GroupBitmask());
     ShowGroups ();
 }
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
 void MainWindow::on_actVIEW_32_bits_HEX_fields_triggered()
 {
-    Settings.Visible_Group32Bits_Hex = !Settings.Visible_Group32Bits_Hex;
+//  Settings.Visible_Group32Bits_Hex = !Settings.Visible_Group32Bits_Hex;
+    Settings.SetVisible_Group32Bits_Hex (!Settings.GetVisible_Group32Bits_Hex());
     ShowGroups ();
 }
 /*------------------------------------------------------------------*/
@@ -789,7 +889,18 @@ void MainWindow::on_actVIEW_Color_jasha_triggered()
     ShowColorSchema ();
 }
 /*------------------------------------------------------------------*/
-/*         Считывание настроек отчёта из файла формата XML          */
+/*------------------------------------------------------------------*/
+void MainWindow::on_actVIEW_MainToolbar_triggered()
+{
+//  if (ui->tbrMainToolbar->isVisible()) ui->tbrMainToolbar->setVisible (false);
+//  else                                 ui->tbrMainToolbar->setVisible (true );
+    Settings.SetVisible_MainToolBar (!Settings.GetVisible_MainToolBar());
+    ShowGroups ();
+    SlotMenuEnableDisable ();
+    adjustSize ();
+}
+/*------------------------------------------------------------------*/
+/*            Считывание настроек из файла формата XML              */
 /*------------------------------------------------------------------*/
 void MainWindow::on_actFILE_Open_triggered()
 {
@@ -797,76 +908,10 @@ void MainWindow::on_actFILE_Open_triggered()
 
     // ----- Предварительные действия перед открытием файла в зависимости от текущего состояния ----- 
 
-    if (0) ;
 
-    else if (CfgFileState == filestateNOT_OPENED_NO_CHANGES     )
-    {
-    }
-    else if (CfgFileState == filestateNOT_OPENED_UNSAVED_CHANGES)
-    {
-        // Предварительный запрос: сохранить ли имеющиеся изменения настроек в файле
-        QMessageBox::StandardButton reply;
-        reply = QMessageBox :: question (this, QString::fromUtf8("Attention"),
-                                         QString::fromUtf8("You have usaved changes in settings.\nDo You want to save current settings before open file?"),
-                                         QMessageBox::Yes | QMessageBox::Ignore | QMessageBox::Cancel);
-        if (0);
-        else if (reply == QMessageBox::Cancel) return;
-        else if (reply == QMessageBox::Ignore) ;
-        else if (reply == QMessageBox::Yes   )
-        {
-            // сохранение текущих настроек перед открытием файла
+    tmp_result = SaveCurrSettingsBeforeNextAction (" open file");
+    if (!tmp_result) return;
 
-            // Выбор имени для файла из которого будут считываться параметры отчёта
-            QString filename = QFileDialog::getSaveFileName
-                               (
-                                   this,
-                                   QString::fromUtf8 ("Select filename to save current changes"),
-                                   QDir::currentPath (),
-                                   "XML (*.xml);;All files (*.*)"
-                               );
-            if ((filename == "") || (filename == 0) || (filename == QString())) return;
-            // собственно сохранение текущих настроек в файл с выбранным именем
-            tmp_result = Settings.SaveToXML (filename);
-            if (!tmp_result)
-            {
-                QMessageBox :: warning (this, "Warning", "File save error!");
-                return;
-            }
-            CfgFileName  = filename;
-            CfgFileState = filestateOPENED_NO_CHANGES;
-        }
-    }
-    else if (CfgFileState == filestateOPENED_NO_CHANGES         )
-    {
-    }
-    else if (CfgFileState == filestateOPENED_UNSAVED_CHANGES    )
-    {
-        // Предварительный запрос: сохранить ли имеющиеся изменения настроек в файле
-        QMessageBox::StandardButton reply;
-        reply = QMessageBox :: question (this, QString::fromUtf8("Attention"),
-                                         QString::fromUtf8("You have usaved changes in settings.\nDo You want to save current settings before open file?"),
-                                         QMessageBox::Save | QMessageBox::Ignore | QMessageBox::Cancel);
-        if (0);
-        else if (reply == QMessageBox::Cancel) return;
-        else if (reply == QMessageBox::Ignore) ;
-        else if (reply == QMessageBox::Yes   )
-        {
-            // сохранение текущих настроек перед открытием файла
-
-            // Выбор имени для файла из которого будут считываться параметры отчёта
-            QString filename = CfgFileName;
-            if ((filename == "") || (filename == 0) || (filename == QString())) return;
-            // собственно сохранение текущих настроек в файл с выбранным именем
-            tmp_result = Settings.SaveToXML (filename);
-            if (!tmp_result)
-            {
-                QMessageBox :: warning (this, "Warning", "File save error!");
-                return;
-            }
-            CfgFileName  = filename;
-            CfgFileState = filestateOPENED_NO_CHANGES;
-        }
-    }
 
     // ----- Открытие файла с настройками ----- 
 
@@ -892,20 +937,42 @@ void MainWindow::on_actFILE_Open_triggered()
     ShowValue  ();
     ShowGroups ();
     SlotMenuEnableDisable ();
-
+    ShowStatus ();
 
     // ----- DEBUG ----- 
     for (int i=0; i<32; i++)
     {
-        qDebug () << "After ReadXML: Bit" << i << ": Settings text = " << Settings.MaskDataOfBit[i].Text;
+//      qDebug () << "After ReadXML: Bit" << i << ": Settings text = " << Settings.MaskDataOfBit[i].Text;
+        qDebug () << "After ReadXML: Bit" << i << ": Settings text = " << Settings.GetText (i);
     }
 }
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
 void MainWindow::on_actFILE_Save_triggered()
 {
+    bool tmp_result = false;
+    QString filename_to_save = CfgFileName;
+
+    // сохранение текущих настроек если имя файла ещё не задано
+    if ((filename_to_save == ""       ) || (filename_to_save == 0     ) || 
+        (filename_to_save == QString()) || (filename_to_save.isEmpty())  )
+    {
+        return on_actFILE_Save_As_triggered ();
+    }
+    // собственно сохранение текущих настроек в файл с выбранным именем
+    tmp_result = Settings.SaveToXML (filename_to_save);
+    if (!tmp_result)
+    {
+        QMessageBox :: warning (this, "Warning", "File save error!");
+        return;
+    }
+    CfgFileName  = filename_to_save;
     CfgFileState = filestateOPENED_NO_CHANGES;
+
+    ShowValue  ();
+    ShowGroups ();
     SlotMenuEnableDisable ();
+    ShowStatus ();
 }
 /*------------------------------------------------------------------*/
 /*           Сохранение настроек отчёта в файл формата XML          */
@@ -913,46 +980,95 @@ void MainWindow::on_actFILE_Save_triggered()
 void MainWindow::on_actFILE_Save_As_triggered()
 {
     bool tmp_result = false;
+    QString filename_to_save = CfgFileName;
 
-    // Выбор имени для файла, в который будут сохраняться параметры отчёта
-    QString filename = QFileDialog::getSaveFileName
+    // Выбор имени для файла, в который будут сохранены текущие настройки
+    filename_to_save = QFileDialog :: getSaveFileName
                        (
                            this,
-                           QString::fromUtf8 ("Выбрать файл для сохранения параметров отчёта"),
+                           QString::fromUtf8 ("Select filename to save current changes"),
                            QDir::currentPath (),
                            "XML (*.xml);;All files (*.*)"
                        );
-    if ((filename == "") || (filename == 0) || (filename == QString())) return;
-
-    tmp_result = Settings.SaveToXML (filename);
-
-    CfgFileName  = filename;
+    // сохранение текущих настроек
+    if ((filename_to_save == ""       ) || (filename_to_save == 0     ) || 
+        (filename_to_save == QString()) || (filename_to_save.isEmpty())  ) return;
+    // собственно сохранение текущих настроек в файл с выбранным именем
+    tmp_result = Settings.SaveToXML (filename_to_save);
+    if (!tmp_result)
+    {
+        QMessageBox :: warning (this, "Warning", "File save error!");
+        return;
+    }
+    CfgFileName  = filename_to_save;
     CfgFileState = filestateOPENED_NO_CHANGES;
 
     ShowValue  ();
     ShowGroups ();
     SlotMenuEnableDisable ();
-}
-/*------------------------------------------------------------------*/
-/*------------------------------------------------------------------*/
-void MainWindow::on_actVIEW_MainToolbar_triggered()
-{
-    if (ui->tbrMainToolbar->isVisible()) ui->tbrMainToolbar->setVisible (false);
-    else                                 ui->tbrMainToolbar->setVisible (true );
-    SlotMenuEnableDisable ();
-    adjustSize ();
+    ShowStatus ();
 }
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
 void MainWindow::on_actFILE_Quit_triggered()
 {
-    if      (CfgFileState == filestateNOT_OPENED_UNSAVED_CHANGES)
+    bool tmp_result = false;
+
+    // ----- Предварительные действия перед закрытием программы в зависимости от текущего состояния ----- 
+
+    tmp_result = SaveCurrSettingsBeforeNextAction (" close application");
+    if (!tmp_result) return;
+
+    // ----- MODBUS: отключение связи -----
+
+    // !!!ATT!!! сделать отключение связи по Modbus
+
+    // ----- Закрытие программы ----- 
+
+    close ();
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow::on_actFILE_Close_triggered()
+{
+    bool tmp_result = false;
+
+    // ----- Предварительные действия перед закрытием файла настроек в зависимости от текущего состояния ----- 
+
+    tmp_result = SaveCurrSettingsBeforeNextAction (" close file");
+    if (!tmp_result) return;
+
+    // ----- "закрытие файла настроек" - применение "пустых" настроек по умолчанию ----- 
+
+    Settings.SetVoid ();
+
+    CfgFileName  = "";
+    CfgFileState = filestateNOT_OPENED_NO_CHANGES;
+    
+    // перерисовка с новыми настройками
+    ShowValue  ();
+    ShowGroups ();
+    SlotMenuEnableDisable ();
+    ShowStatus ();
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow :: SlotOnSettingsTouched ()
+{
+    if (Settings.IsChanged())
     {
+        if      (CfgFileState == filestateNOT_OPENED_NO_CHANGES) CfgFileState = filestateNOT_OPENED_UNSAVED_CHANGES;
+        else if (CfgFileState == filestateOPENED_NO_CHANGES    ) CfgFileState = filestateOPENED_UNSAVED_CHANGES    ;
     }
-    else if (CfgFileState == filestateOPENED_UNSAVED_CHANGES)
+    else
     {
+        if      (CfgFileState == filestateNOT_OPENED_UNSAVED_CHANGES) CfgFileState = filestateNOT_OPENED_NO_CHANGES;
+        else if (CfgFileState == filestateOPENED_UNSAVED_CHANGES    ) CfgFileState = filestateOPENED_NO_CHANGES    ;
     }
-    else    close ();
+    ShowValue  ();
+    ShowGroups ();
+    SlotMenuEnableDisable ();
+    ShowStatus ();
 }
 /*------------------------------------------------------------------*/
 
@@ -1052,13 +1168,15 @@ void MainWindow :: PasteFromBuffer ()
         if (buf_pos >= buf_size)
         {
             // end of buffer
-            ui->tblBitmask->item(line_no, 4)->setText (line_text);
+//          ui->tblBitmask->item(line_no, 4)->setText (line_text);
+            Settings.SetText (line_no, line_text);
             exit_flag = true;
         }
         else if (buf_text.at(buf_pos) == QChar('\n'))
         {
             // end of line
-            ui->tblBitmask->item(line_no, 4)->setText (line_text);
+//          ui->tblBitmask->item(line_no, 4)->setText (line_text);
+            Settings.SetText (line_no, line_text);
             line_text = "";
             line_no   ++  ;
             if (line_no >= 32)           exit_flag = true;
@@ -1072,10 +1190,105 @@ void MainWindow :: PasteFromBuffer ()
     }
 }
 /*------------------------------------------------------------------*/
+bool MainWindow :: SaveCurrSettingsBeforeNextAction (QString InformTextTail)
+{
+    // проверка необходимости сохранения настроек перед
+    // тем как произвести дальнейшие действия (открытие
+    // другого файла с настройками, закрытие приложения
+    // и т.д.)
+    // возвращается признак возможности продолжения
+    // дальнейших действий. Если пользовал выбрал отме-
+    // ну или произошла ошибка при сохранении, то даль-
+    // нейшие действия продолжать нельзя - возвращается
+    // false. Иначе, если сохранение прошло успешно или
+    // вообще не потребовалось, возвращается true.
 
+    QString filename_to_save = CfgFileName;
+    QMessageBox::StandardButton reply;
+    QMessageBox msg;
+    bool tmp_result;
+    int  dlg_result;
 
+    if (0) return true;
 
+    else if (CfgFileState == filestateNOT_OPENED_NO_CHANGES) return true;
+    else if (CfgFileState == filestateOPENED_NO_CHANGES    ) return true;
+    else if (CfgFileState == filestateNOT_OPENED_UNSAVED_CHANGES)
+    {
+        // Предварительный запрос: сохранить ли имеющиеся изменения настроек в файле
+        reply = QMessageBox :: question (this, QString::fromUtf8("Attention"),
+                                         QString::fromUtf8("You have usaved changes in settings.\nDo You want to save current settings before") + InformTextTail + "?",
+                                         QMessageBox::Yes | QMessageBox::Ignore | QMessageBox::Cancel);
+        if (0) return true ;
+        else if (reply == QMessageBox::Cancel) return false;
+        else if (reply == QMessageBox::Ignore) return true ;
+        else if (reply == QMessageBox::Yes   ) goto CHOICE_FILE_NAME;
+    }
+    else if (CfgFileState == filestateOPENED_UNSAVED_CHANGES)
+    {
+        // Предварительный запрос: сохранить ли имеющиеся изменения настроек в файле
+        msg.setWindowTitle ("Attention");
+        msg.setInformativeText ("You have usaved changes in settings.\nDo You want to save current settings before" + InformTextTail + "?");
+        msg.setIcon (QMessageBox::Question);
+        msg.setStandardButtons (QMessageBox::Save);
+        msg.addButton (QString("Save As"), QMessageBox::AcceptRole);
+        msg.addButton (QMessageBox::Ignore);
+        msg.addButton (QMessageBox::Cancel);
+/*
+        reply = QMessageBox :: question (this, QString::fromUtf8("Attention"),
+                                         QString::fromUtf8("You have usaved changes in settings.\nDo You want to save current settings before open file?"),
+//                                       QMessageBox::Save | QMessageBox::Save | QMessageBox::Ignore | QMessageBox::Cancel);
+                                         msg.standardButtons());
+*/
+        dlg_result = msg.exec ();
+        reply = (QMessageBox::StandardButton) dlg_result;
+
+        if (0);
+        else if (reply == QMessageBox::Cancel) return false;
+        else if (reply == QMessageBox::Ignore) return true ;
+        else if (reply == QMessageBox::Save  ) goto SAVING;
+        else                                   goto CHOICE_FILE_NAME;
+    }
+CHOICE_FILE_NAME:
+
+    // Выбор имени для файла, в который будут сохранены текущие настройки
+    filename_to_save = QFileDialog :: getSaveFileName
+                       (
+                           this,
+                           QString::fromUtf8 ("Select filename to save current changes"),
+                           QDir::currentPath (),
+                           "XML (*.xml);;All files (*.*)"
+                       );
+    goto SAVING;
+
+SAVING:
+
+    // сохранение текущих настроек
+    if ((filename_to_save == ""       ) || (filename_to_save == 0     ) || 
+        (filename_to_save == QString()) || (filename_to_save.isEmpty())  ) return false;
+    // собственно сохранение текущих настроек в файл с выбранным именем
+    tmp_result = Settings.SaveToXML (filename_to_save);
+    if (!tmp_result)
+    {
+        QMessageBox :: warning (this, "Warning", "File save error!");
+        return false;
+    }
+    CfgFileName  = filename_to_save;
+    if (CfgFileState == filestateOPENED_UNSAVED_CHANGES    ) CfgFileState = filestateOPENED_NO_CHANGES    ;
+    if (CfgFileState == filestateNOT_OPENED_UNSAVED_CHANGES) CfgFileState = filestateNOT_OPENED_NO_CHANGES;
+
+    return true;
+}
+
+/*------------------------------------------------------------------*/
 void MainWindow::on_actHELP_About_triggered()
 {
-    QMessageBox :: about (this, "About", "Bitmask 2.0");
+    QMessageBox :: about (this, "About",
+                          VER_PRODUCTNAME_STR
+                          "\n" VER_FILE_DESCRIPTION_STR
+                          "\n" "Version: " VER_FILE_VERSION_STR
+                          "\n" "Build date: " __DATE__ ", " __TIME__
+                          "\n" VER_COPYRIGHT_STR);
 }
+/*------------------------------------------------------------------*/
+
