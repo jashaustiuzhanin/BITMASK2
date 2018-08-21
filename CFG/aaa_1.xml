@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BitmaskCfg>
+    <GroupDecHexBin show="true"/>
+    <Group32Bits show="true" hex_show="true"/>
+    <GroupBitmask show="false" st_color_columns_show="true">
+        <Bit0 text=""/>
+        <Bit1 text=""/>
+        <Bit2 text=""/>
+        <Bit3 text=""/>
+        <Bit4 text=""/>
+        <Bit5 text=""/>
+        <Bit6 text=""/>
+        <Bit7 text=""/>
+        <Bit8 text=""/>
+        <Bit9 text=""/>
+        <Bit10 text=""/>
+        <Bit11 text=""/>
+        <Bit12 text=""/>
+        <Bit13 text=""/>
+        <Bit14 text=""/>
+        <Bit15 text=""/>
+        <Bit16 text=""/>
+        <Bit17 text=""/>
+        <Bit18 text=""/>
+        <Bit19 text=""/>
+        <Bit20 text=""/>
+        <Bit21 text=""/>
+        <Bit22 text=""/>
+        <Bit23 text=""/>
+        <Bit24 text=""/>
+        <Bit25 text=""/>
+        <Bit26 text=""/>
+        <Bit27 text=""/>
+        <Bit28 text=""/>
+        <Bit29 text=""/>
+        <Bit30 text=""/>
+        <Bit31 text=""/>
+    </GroupBitmask>
+    <MainToolBar show="true"/>
+    <ColorSchema name="Standart"/>
+    <Modbus IP="128.1.2.215" Port="505"/>
+</BitmaskCfg>

@@ -1,6 +1,9 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "dlgmaskdatastyle.h"
+#include "dialogcolorallst.h"
+#include "dialogcolorst0.h"
+#include "dialogcolorst1.h"
 #include <QFileDialog>
 #include <QApplication>
 #include <QClipboard>
@@ -8,6 +11,37 @@
 #include <QKeyEvent>
 #include <QMessageBox>
 #include "version.h"
+#include <QTimer>
+#include "dialogmodbusparams.h"
+
+/*------------------------------------------------------------------*/
+/* Данные: параметры для обмена с контроллером по протоколу Modbus  */
+/*------------------------------------------------------------------*/
+static int cycle_counter_1_10 = 1;
+/*
+static modbus_t *MODBUS_ctx         = NULL;
+static int       MODBUS_res_connect = -1;
+static int       MODBUS_res_read    = -1;
+static int       MODBUS_res_write   = -1;
+static uint16_t  MODBUS_tab_reg [64];
+*/
+static int       DelayByModbusFlag = 0; /* флаг задержки циклического исполнения из-за ожидания выполнения операции Modbus */
+
+static int MODBUS_CONNECT_ATTEMPTED = 0;
+
+static QTimer *pModbusTimer;
+
+/* ----- MODBUS: connect to the modbus-server ----- */
+//int MODBUS_connect_to_server ();
+/* ----- Function: получение IP-адреса в виде строки ----- */
+//char * IPAddrAsString (int *IPAddrParts);
+/* ----- MODBUS: Чтение и разбор пакета Block 1 - Пульса PLC и времени цикла ----- */
+//void MODBUS_Block01_ReadPulse ();
+/* ----- MODBUS: Чтение и разбор пакета Block 2 - сигналов для модулей DO16 №4, 5 и 6 ----- */
+//void MODBUS_Block02_ReadData ();
+
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
 
 /* глобальный список доступных цветовых схем */
 QVector <TColorSchema> ColorSchemas;
@@ -40,6 +74,13 @@ MainWindow :: MainWindow (QWidget *parent) :
     pStatusLabel = new QLabel (this);
     this->statusBar ()->addPermanentWidget (pStatusLabel);
 
+    pValSrcLabel = new QLabel (this);
+    pPulseLabel  = new QLabel (this);
+    this->statusBar()->addWidget (pValSrcLabel);
+    this->statusBar()->addWidget (pPulseLabel );
+    pValSrcLabel->setText ("manual");
+    pPulseLabel ->setText ("");
+
     ui->spnDecimal    ->SetMode (BMQSpinBox::modeDECIMAL    );
     ui->spnDecimal    ->SetBitsCount_32 ();
     ui->spnHexadecimal->SetMode (BMQSpinBox::modeHEXADECIMAL);
@@ -68,6 +109,7 @@ MainWindow :: MainWindow (QWidget *parent) :
     ShowInProcessFlag = false;
     Value = 0;
     ShowValue ();
+    ValSrc = valsrcMANUAL;
 
     CfgFileName  = "";
     CfgFileState = filestateNOT_OPENED_NO_CHANGES;
@@ -83,7 +125,7 @@ MainWindow :: MainWindow (QWidget *parent) :
 //  ui->tblBitmask->setRowCount    (32); // Указываем число колонок
     ui->tblBitmask->setShowGrid(true); // Включаем сетку
     // Разрешаем выделение только одного элемента
-    ui->tblBitmask->setSelectionMode(QAbstractItemView::SingleSelection);
+//  ui->tblBitmask->setSelectionMode(QAbstractItemView::SingleSelection);
     // Разрешаем выделение построчно
     ui->tblBitmask->setSelectionBehavior(QAbstractItemView::SelectRows);
     // Устанавливаем заголовки колонок
@@ -100,7 +142,8 @@ MainWindow :: MainWindow (QWidget *parent) :
 
     // инициализация цветовых схем
     ColorSchemas_Init ();
-    ColorSchema = ColorSchemas.at (0);
+//  ColorSchema = ColorSchemas.at (0);
+    SetColorSchemaByName ("Standart");
 
     // инициализация цветов отображения битовых масок значениями по умолчанию
 /*
@@ -195,8 +238,34 @@ MainWindow :: MainWindow (QWidget *parent) :
     int h = fm.height() + 2;
     ui->tblBitmask->verticalHeader()->setDefaultSectionSize (h);
     ui->tblBitmask->setMinimumHeight (h*32 + ui->tblBitmask->horizontalHeader()->height()+4);
-    ui->tblBitmask->setSelectionMode (QAbstractItemView::NoSelection);
-
+//  ui->tblBitmask->setSelectionMode (QAbstractItemView::NoSelection);
+    for (int bit=0; bit<32; bit++)
+    {
+        ui->tblBitmask->item(bit, 2)->setFlags(Qt::NoItemFlags        |
+                                               Qt::ItemIsSelectable   |
+//                                             Qt::ItemIsEditable     |
+//                                             Qt::ItemIsDragEnabled  |
+//                                             Qt::ItemIsDropEnabled  |
+//                                             Qt::ItemIsUserCheckable|
+                                               Qt::ItemIsEnabled      |
+//                                             Qt::ItemIsAutoTristate |
+//                                             Qt::ItemIsTristate     |
+//                                             Qt::ItemNeverHasChildren|
+//                                             Qt::ItemIsUserTristate |
+                                               Qt::NoItemFlags        );
+        ui->tblBitmask->item(bit, 4)->setFlags(Qt::NoItemFlags        |
+//                                             Qt::ItemIsSelectable   |
+                                               Qt::ItemIsEditable     |
+                                               Qt::ItemIsDragEnabled  |
+                                               Qt::ItemIsDropEnabled  |
+                                               Qt::ItemIsUserCheckable|
+                                               Qt::ItemIsEnabled      |
+//                                             Qt::ItemIsAutoTristate |
+//                                             Qt::ItemIsTristate     |
+//                                             Qt::ItemNeverHasChildren|
+//                                             Qt::ItemIsUserTristate |
+                                               Qt::NoItemFlags        );
+    }
 
 //  QObject :: connect (ui->spnDecimal    , SIGNAL(valueChanged(int)), this, SLOT(SlotOnSpnDecimal    ()));
 //  QObject :: connect (ui->spnHexadecimal, SIGNAL(valueChanged(   )), this, SLOT(SlotOnSpnHexadecimal()));
@@ -247,11 +316,19 @@ MainWindow :: MainWindow (QWidget *parent) :
     QObject :: connect (ui->chkByte3_30, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
     QObject :: connect (ui->chkByte3_31, SIGNAL(clicked()), this, SLOT(SlotOn32bitChkBox()));
 
-    QObject :: connect (ui->tblBitmask, SIGNAL(cellClicked(int,int)), this, SLOT(SlotOnBitmaskClicked(int,int)));
+//  QObject :: connect (ui->tblBitmask, SIGNAL(cellClicked(int,int)), this, SLOT(SlotOnBitmaskClicked(int,int)));
+    QObject :: connect (ui->tblBitmask, SIGNAL(cellDoubleClicked(int,int)), this, SLOT(SlotOnBitmaskClicked(int,int)));
 
     QObject :: connect (ui->tblBitmask, SIGNAL(itemChanged(QTableWidgetItem *)), this, SLOT(SlotOnBitmaskText()));
 
     QObject :: connect (&Settings, SIGNAL(SignalTouched()), this, SLOT(SlotOnSettingsTouched()));
+
+    QObject :: connect (ui->tblBitmask->selectionModel(), SIGNAL(selectionChanged(const QItemSelection, const QItemSelection)), this, SLOT(SlotBitmaskSelectionChanged()));
+
+    MODBUS_ctx         = NULL;
+    MODBUS_res_connect = -1;
+    MODBUS_res_read    = -1;
+    MODBUS_res_write   = -1;
 
     ShowColorSchema ();
     SlotMenuEnableDisable ();
@@ -260,6 +337,7 @@ MainWindow :: MainWindow (QWidget *parent) :
     ShowStatus ();
 
     QRect r = geometry ();
+    Q_UNUSED (r)
 //  r.setHeight (10);
 //  r.setWidth  (10);
 //  setGeometry (r.left(), r.top(), 10, 10);
@@ -523,6 +601,7 @@ void MainWindow :: SlotOnBitmaskText ()
 void MainWindow :: ShowColorSchema ()
 {
     this->setStyleSheet (ColorSchema.StyleSheetString);
+    this->repaint ();
 }
 
 /*------------------------------------------------------------------*/
@@ -709,6 +788,7 @@ void MainWindow :: SlotMenuEnableDisable ()
         ui->actFILE_Close  ->setEnabled (true );
     }
 
+    SlotBitmaskSelectionChanged ();
 }
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
@@ -760,6 +840,18 @@ void MainWindow :: ShowGroups ()
     ui->actVIEW_Bitmask    ->setChecked (ui->grpBitmask    ->isVisible ());
 
     ui->actVIEW_32_bits_HEX_fields->setChecked (ui->spnByte0_HexLeft->isVisible());
+    ui->actVIEW_Bitmask_St_Color_Columns->setChecked (Settings.GetVisible_GroupBitmask_StColorColumns());
+
+    if (Settings.GetVisible_GroupBitmask_StColorColumns())
+    {
+        ui->tblBitmask->setColumnHidden (0, false);
+        ui->tblBitmask->setColumnHidden (1, false);
+    }
+    else
+    {
+        ui->tblBitmask->setColumnHidden (0, true );
+        ui->tblBitmask->setColumnHidden (1, true );
+    }
 //  resize(sizeHint());
 }
 
@@ -876,17 +968,26 @@ void MainWindow::on_actVIEW_32_bits_HEX_fields_triggered()
 }
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
+void MainWindow::on_actVIEW_Bitmask_St_Color_Columns_triggered()
+{
+    Settings.SetVisible_GroupBitmask_StColorColumns (!Settings.GetVisible_GroupBitmask_StColorColumns());
+    ShowGroups ();
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
 void MainWindow::on_actVIEW_Color_Standart_triggered()
 {
-    ColorSchema = ColorSchemas.at (0);
-    ShowColorSchema ();
+//  ColorSchema = ColorSchemas.at (0);
+//  ShowColorSchema ();
+    SetColorSchemaByName ("Standart");
 }
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
 void MainWindow::on_actVIEW_Color_jasha_triggered()
 {
-    ColorSchema = ColorSchemas.at (1);
-    ShowColorSchema ();
+//  ColorSchema = ColorSchemas.at (1);
+//  ShowColorSchema ();
+    SetColorSchemaByName ("jasha");
 }
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
@@ -936,6 +1037,7 @@ void MainWindow::on_actFILE_Open_triggered()
     // перерисовка с новыми настройками
     ShowValue  ();
     ShowGroups ();
+    ShowColorSchema ();
     SlotMenuEnableDisable ();
     ShowStatus ();
 
@@ -971,6 +1073,7 @@ void MainWindow::on_actFILE_Save_triggered()
 
     ShowValue  ();
     ShowGroups ();
+    ShowColorSchema ();
     SlotMenuEnableDisable ();
     ShowStatus ();
 }
@@ -1005,6 +1108,7 @@ void MainWindow::on_actFILE_Save_As_triggered()
 
     ShowValue  ();
     ShowGroups ();
+    ShowColorSchema ();
     SlotMenuEnableDisable ();
     ShowStatus ();
 }
@@ -1048,6 +1152,7 @@ void MainWindow::on_actFILE_Close_triggered()
     // перерисовка с новыми настройками
     ShowValue  ();
     ShowGroups ();
+    ShowColorSchema ();
     SlotMenuEnableDisable ();
     ShowStatus ();
 }
@@ -1067,6 +1172,7 @@ void MainWindow :: SlotOnSettingsTouched ()
     }
     ShowValue  ();
     ShowGroups ();
+    ShowColorSchema ();
     SlotMenuEnableDisable ();
     ShowStatus ();
 }
@@ -1281,6 +1387,20 @@ SAVING:
 }
 
 /*------------------------------------------------------------------*/
+void MainWindow :: SetColorSchemaByName (QString Name)
+{
+    ColorSchema.SetDefault ();
+    for (int i=0; i<ColorSchemas.count(); i++)
+    {
+        if (ColorSchemas[i].Name == Name) 
+        {
+            ColorSchema = ColorSchemas[i];
+            break;
+        }
+    }
+    Settings.SetColorSchemaName (Name);
+}
+/*------------------------------------------------------------------*/
 void MainWindow::on_actHELP_About_triggered()
 {
     QMessageBox :: about (this, "About",
@@ -1288,7 +1408,559 @@ void MainWindow::on_actHELP_About_triggered()
                           "\n" VER_FILE_DESCRIPTION_STR
                           "\n" "Version: " VER_FILE_VERSION_STR
                           "\n" "Build date: " __DATE__ ", " __TIME__
-                          "\n" VER_COPYRIGHT_STR);
+                          "\n" VER_COPYRIGHT_STR
+                          "\n"
+                          "\n" "For work with Modbus used \"libmodbus\" -"
+                          "\n" "a groovy modbus library by"
+                          "\n" "Stéphane Raimbault <stephane.raimbault@gmail.com>"
+                          "\n" "Tobias Doerffel <tobias.doerffel@gmail.com>"
+                          "\n" "Florian Forster <ff@octo.it>");
 }
 /*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow::on_actEDIT_Choice_Color_AllSt_triggered()
+{
+#ifdef __DELETED_FRAGMENT__
+
+    QModelIndexList selection = ui->tblBitmask->selectionModel()->selectedRows();
+    TMaskDataOfOneBit mdata;
+    int row_for_title = -1;
+
+    // определяем количество выделенных бит (строк)
+    int count = selection.count();
+    if (count < 1) return;
+    // если выделена только одна строка, то считываются её текущие
+    // цветовые настройки
+    if (count == 1)
+    {
+        int row = ui->tblBitmask->selectionModel()->currentIndex().row();
+        if ((row >= 0) && (row < 32))
+        {
+            mdata.TextColorState0 = Settings.GetTextColorSt0 (row);
+            mdata.BackColorState0 = Settings.GetBackColorSt0 (row);
+            mdata.TextColorState1 = Settings.GetTextColorSt1 (row);
+            mdata.BackColorState1 = Settings.GetBackColorSt1 (row);
+
+            row_for_title = row;
+        }
+    }
+    // иначе берутся пустые цветовые настройки
+    else
+    {
+        mdata.TextColorState0 = QColor ();
+        mdata.BackColorState0 = QColor ();
+        mdata.TextColorState1 = QColor ();
+        mdata.BackColorState1 = QColor ();
+    }
+
+    DlgMaskDataStyle *p_dlg = new DlgMaskDataStyle (this);
+    int dlg_result;
+    p_dlg->SetData (row_for_title, mdata);
+    dlg_result = p_dlg->exec ();
+    if (dlg_result == QDialog::Accepted)
+    {
+        mdata = p_dlg->GetData ();
+
+        QObject :: disconnect (&Settings, SIGNAL(SignalTouched()), this, SLOT(SlotOnSettingsTouched()));
+
+        for (int i=0; i<count; i++)
+        {
+            int row = selection.at(i).row();
+            if (row <   0) continue;
+            if (row >= 32) continue;
+
+            Settings.SetTextColorSt0 (row, mdata.TextColorState0);
+            Settings.SetBackColorSt0 (row, mdata.BackColorState0);
+            Settings.SetTextColorSt1 (row, mdata.TextColorState1);
+            Settings.SetBackColorSt1 (row, mdata.BackColorState1);
+        }
+
+        QObject :: connect (&Settings, SIGNAL(SignalTouched()), this, SLOT(SlotOnSettingsTouched()));
+
+        SlotOnSettingsTouched();
+    }
+    ShowValue ();
+
+#endif /*__DELETED_FRAGMENT__*/
+
+    QModelIndexList selection = ui->tblBitmask->selectionModel()->selectedRows();
+    TMaskDataOfOneBit mdata;
+    int row_for_title = -1;
+
+    // определяем количество выделенных бит (строк)
+    int count = selection.count();
+    if (count < 1) return;
+    // если выделена только одна строка, то считываются её текущие
+    // цветовые настройки
+    if (count == 1)
+    {
+        int row = ui->tblBitmask->selectionModel()->currentIndex().row();
+        if ((row >= 0) && (row < 32))
+        {
+            mdata.TextColorState0 = Settings.GetTextColorSt0 (row);
+            mdata.BackColorState0 = Settings.GetBackColorSt0 (row);
+            mdata.TextColorState1 = Settings.GetTextColorSt1 (row);
+            mdata.BackColorState1 = Settings.GetBackColorSt1 (row);
+
+            row_for_title = row;
+        }
+    }
+    // иначе берутся пустые цветовые настройки
+    else
+    {
+        mdata.TextColorState0 = QColor ();
+        mdata.BackColorState0 = QColor ();
+        mdata.TextColorState1 = QColor ();
+        mdata.BackColorState1 = QColor ();
+    }
+
+    DialogColorAllSt *p_dlg = new DialogColorAllSt (this);
+    int dlg_result;
+    p_dlg->SetData (row_for_title, mdata, ColorSchema);
+    dlg_result = p_dlg->exec ();
+    if (dlg_result == QDialog::Accepted)
+    {
+        mdata = p_dlg->GetData ();
+
+        QObject :: disconnect (&Settings, SIGNAL(SignalTouched()), this, SLOT(SlotOnSettingsTouched()));
+
+        for (int i=0; i<count; i++)
+        {
+            int row = selection.at(i).row();
+            if (row <   0) continue;
+            if (row >= 32) continue;
+
+            Settings.SetTextColorSt0 (row, mdata.TextColorState0);
+            Settings.SetBackColorSt0 (row, mdata.BackColorState0);
+            Settings.SetTextColorSt1 (row, mdata.TextColorState1);
+            Settings.SetBackColorSt1 (row, mdata.BackColorState1);
+        }
+
+        QObject :: connect (&Settings, SIGNAL(SignalTouched()), this, SLOT(SlotOnSettingsTouched()));
+
+        SlotOnSettingsTouched();
+    }
+    ShowValue ();
+
+}
+
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow::on_actEDIT_Choice_Color_St0_triggered()
+{
+    QModelIndexList selection = ui->tblBitmask->selectionModel()->selectedRows();
+    TMaskDataOfOneBit mdata;
+    int row_for_title = -1;
+
+    // определяем количество выделенных бит (строк)
+    int count = selection.count();
+    if (count < 1) return;
+    // если выделена только одна строка, то считываются её текущие
+    // цветовые настройки
+    if (count == 1)
+    {
+        int row = ui->tblBitmask->selectionModel()->currentIndex().row();
+        if ((row >= 0) && (row < 32))
+        {
+            mdata.TextColorState0 = Settings.GetTextColorSt0 (row);
+            mdata.BackColorState0 = Settings.GetBackColorSt0 (row);
+            mdata.TextColorState1 = Settings.GetTextColorSt1 (row);
+            mdata.BackColorState1 = Settings.GetBackColorSt1 (row);
+
+            row_for_title = row;
+        }
+    }
+    // иначе берутся пустые цветовые настройки
+    else
+    {
+        mdata.TextColorState0 = QColor ();
+        mdata.BackColorState0 = QColor ();
+        mdata.TextColorState1 = QColor ();
+        mdata.BackColorState1 = QColor ();
+    }
+
+    DialogColorSt0 *p_dlg = new DialogColorSt0 (this);
+    int dlg_result;
+    p_dlg->SetData (row_for_title, mdata, ColorSchema);
+    dlg_result = p_dlg->exec ();
+    if (dlg_result == QDialog::Accepted)
+    {
+        mdata = p_dlg->GetData ();
+
+        QObject :: disconnect (&Settings, SIGNAL(SignalTouched()), this, SLOT(SlotOnSettingsTouched()));
+
+        for (int i=0; i<count; i++)
+        {
+            int row = selection.at(i).row();
+            if (row <   0) continue;
+            if (row >= 32) continue;
+
+            Settings.SetTextColorSt0 (row, mdata.TextColorState0);
+            Settings.SetBackColorSt0 (row, mdata.BackColorState0);
+//          Settings.SetTextColorSt1 (row, mdata.TextColorState1);
+//          Settings.SetBackColorSt1 (row, mdata.BackColorState1);
+        }
+
+        QObject :: connect (&Settings, SIGNAL(SignalTouched()), this, SLOT(SlotOnSettingsTouched()));
+
+        SlotOnSettingsTouched();
+    }
+    ShowValue ();
+
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow::on_actEDIT_Choice_Color_St1_triggered()
+{
+    QModelIndexList selection = ui->tblBitmask->selectionModel()->selectedRows();
+    TMaskDataOfOneBit mdata;
+    int row_for_title = -1;
+
+    // определяем количество выделенных бит (строк)
+    int count = selection.count();
+    if (count < 1) return;
+    // если выделена только одна строка, то считываются её текущие
+    // цветовые настройки
+    if (count == 1)
+    {
+        int row = ui->tblBitmask->selectionModel()->currentIndex().row();
+        if ((row >= 0) && (row < 32))
+        {
+            mdata.TextColorState0 = Settings.GetTextColorSt0 (row);
+            mdata.BackColorState0 = Settings.GetBackColorSt0 (row);
+            mdata.TextColorState1 = Settings.GetTextColorSt1 (row);
+            mdata.BackColorState1 = Settings.GetBackColorSt1 (row);
+
+            row_for_title = row;
+        }
+    }
+    // иначе берутся пустые цветовые настройки
+    else
+    {
+        mdata.TextColorState0 = QColor ();
+        mdata.BackColorState0 = QColor ();
+        mdata.TextColorState1 = QColor ();
+        mdata.BackColorState1 = QColor ();
+    }
+
+    DialogColorSt1 *p_dlg = new DialogColorSt1 (this);
+    int dlg_result;
+    p_dlg->SetData (row_for_title, mdata, ColorSchema);
+    dlg_result = p_dlg->exec ();
+    if (dlg_result == QDialog::Accepted)
+    {
+        mdata = p_dlg->GetData ();
+
+        QObject :: disconnect (&Settings, SIGNAL(SignalTouched()), this, SLOT(SlotOnSettingsTouched()));
+
+        for (int i=0; i<count; i++)
+        {
+            int row = selection.at(i).row();
+            if (row <   0) continue;
+            if (row >= 32) continue;
+
+//          Settings.SetTextColorSt0 (row, mdata.TextColorState0);
+//          Settings.SetBackColorSt0 (row, mdata.BackColorState0);
+            Settings.SetTextColorSt1 (row, mdata.TextColorState1);
+            Settings.SetBackColorSt1 (row, mdata.BackColorState1);
+        }
+
+        QObject :: connect (&Settings, SIGNAL(SignalTouched()), this, SLOT(SlotOnSettingsTouched()));
+
+        SlotOnSettingsTouched();
+    }
+    ShowValue ();
+
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow :: SlotBitmaskSelectionChanged ()
+{
+    // определяем количество выделенных бит (строк)
+    int count = ui->tblBitmask->selectionModel()->selectedRows().count();
+    if (count < 1)
+    {
+        ui->actEDIT_Choice_Color_St0  ->setEnabled (false);
+        ui->actEDIT_Choice_Color_St1  ->setEnabled (false);
+        ui->actEDIT_Choice_Color_AllSt->setEnabled (false);
+    }
+    else
+    {
+        ui->actEDIT_Choice_Color_St0  ->setEnabled (true );
+        ui->actEDIT_Choice_Color_St1  ->setEnabled (true );
+        ui->actEDIT_Choice_Color_AllSt->setEnabled (true );
+    }
+
+}
+
+/*==================================================================*/
+/*                              MODBUS                              */
+/*==================================================================*/
+
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow::on_actMODBUS_Start_triggered()
+{
+    SlotModbusStart ();
+}
+
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow::on_actMODBUS_Stop_triggered()
+{
+    SlotModbusStop  ();
+}
+
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow :: on_actMODBUS_Settings_triggered ()
+{
+    DialogModbusParams *p_dlg = new DialogModbusParams (this);
+    p_dlg->SetData (Settings.GetModbusParams());
+    int dlg_result;
+    dlg_result = p_dlg->exec ();
+    if (dlg_result == QDialog::Accepted)
+    {
+        p_dlg->GetData (Settings.GetModbusParams());
+    }
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow :: SlotModbusStart ()
+{
+    ValSrc = valsrcMODBUS;
+//  MODBUS_connect_to_server ();
+    ModbusConnectToServer ();
+    pModbusTimer = new QTimer (this);
+    QObject :: connect (pModbusTimer, SIGNAL(timeout()), this, SLOT(SlotCycleDataRead ()));
+    pModbusTimer->start ( 250);
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow :: SlotModbusStop  ()
+{
+    pModbusTimer->stop ();
+    delete pModbusTimer;
+    pModbusTimer = 0;
+    if (MODBUS_ctx != NULL) {modbus_close (MODBUS_ctx); modbus_free (MODBUS_ctx); MODBUS_ctx = NULL;}
+
+    ValSrc = valsrcMANUAL;
+    pValSrcLabel->setText ("manual");
+    pPulseLabel ->setText ("");
+}
+
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow :: SlotCycleDataRead ()
+{
+    /* иначе, если используется настоящий внешний контроллер,  */ /* MODBUS TCP */
+    /* то его сигналы и другие параметры считываются по Modbus */
+    if (ValSrc == valsrcMODBUS)
+    {
+        DelayByModbusFlag = 1;
+
+        pValSrcLabel->setText (QString("MB ") + Settings.GetModbusServerIPCfgStr(true) + 
+                               QString(", reg ") + QString::number(Settings.GetModbusValueRegNo()));
+        pPulseLabel ->setText ("");
+
+        /* если связь с контроллером через сервер Modbus установлена, то производится обработка Modbus-пакетов */
+        if ((MODBUS_ctx != NULL) && (MODBUS_res_connect != -1))
+        {
+//          modbus_set_slave (MODBUS_ctx, PLC_ModbusConfig.MBNodeAddr);
+		    modbus_set_slave (MODBUS_ctx, Settings.GetModbusServerMBNode());
+        
+            if ( ((cycle_counter_1_10 >= 1) && (cycle_counter_1_10 <=  4)) ||
+                 ((cycle_counter_1_10 >= 6) && (cycle_counter_1_10 <=  9))  )
+            {
+            /* MODBUS: Чтение и разбор пакета Block 1 - Пульса PLC и времени цикла */
+//          MODBUS_Block01_ReadPulse ();
+            ModbusReadPulse ();
+            if (Settings.GetModbusPulseRegNo () >= 0) pPulseLabel->setText (QString("pulse ") + QString::number(ModbusServerPulse));
+
+            /* MODBUS: Чтение и разбор пакета Block 2 - сигналов для модулей DO16 №4, 5 и 6 */
+//          MODBUS_Block02_ReadData ();
+            ModbusReadValue ();
+            ShowValue ();
+            }
+
+        }
+        /* иначе, если связь не установлена, то один раз производится попытка установки связи */
+        else if ((!MODBUS_CONNECT_ATTEMPTED) || (cycle_counter_1_10 == 10))
+        {
+            /* MODBUS: connect to the modbus-server */
+//          MODBUS_connect_to_server ();
+            ModbusConnectToServer ();
+
+            /* устанавливается признак того, что попытка соединения уже производилась */
+            MODBUS_CONNECT_ATTEMPTED = 1;
+        }
+
+        DelayByModbusFlag = 0;
+    }
+
+}
+
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+int  MainWindow :: ModbusConnectToServer ()
+{
+    int result = 0;
+
+    if (MODBUS_ctx != NULL) modbus_free (MODBUS_ctx);
+    
+//  MODBUS_ctx = modbus_new_tcp ("192.168.56.101", 502);
+//  MODBUS_ctx = modbus_new_tcp (IPAddrAsString (PLC_ModbusConfig.IPAddrPart), PLC_ModbusConfig.Port);
+    MODBUS_ctx = modbus_new_tcp (Settings.GetModbusServerIPCfgStr(false).toLatin1(), Settings.GetModbusIPPort());
+        
+    if (MODBUS_ctx == NULL) {result = 0; return result;}
+    
+    MODBUS_res_connect = modbus_connect (MODBUS_ctx);
+    if (MODBUS_res_connect == -1)
+    {
+        char s[500];
+        strcpy (s, modbus_strerror ((int)MODBUS_ctx));
+        s[499] = '\0x00';
+        result = 0;
+        return result;
+    }
+    result = 1;
+    return result;
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow :: ModbusReadValue ()
+{
+    int value_reg_no = Settings.GetModbusValueRegNo ();
+    if (value_reg_no >= 0)
+    {
+        MODBUS_res_read = modbus_read_registers (MODBUS_ctx, value_reg_no, 2, MODBUS_tab_reg);
+        Value = MODBUS_tab_reg [0];
+    }
+    else
+    {
+//      Value = 0;
+    }
+}
+/*------------------------------------------------------------------*/
+/*------------------------------------------------------------------*/
+void MainWindow :: ModbusReadPulse ()
+{
+    int pulse_reg_no = Settings.GetModbusPulseRegNo ();
+    if (pulse_reg_no >= 0)
+    {
+        MODBUS_res_read = modbus_read_registers (MODBUS_ctx, pulse_reg_no, 2, MODBUS_tab_reg);
+        ModbusServerPulse = MODBUS_tab_reg [0];
+    }
+    else
+    {
+//      ModbusServerPulse = 0;
+    }
+}
+
+
+#ifdef __DELETED_FRAGMENT__
+
+/*------------------------------------------------------------------*/
+/*                   считывание данных по Modbus                    */
+/*------------------------------------------------------------------*/
+void MODBUS_Block01_ReadPulse ()
+{
+/*
+    int begin_reg_idx, size;
+    
+    // чтение пульса контроллера по Modbus и времени цикла
+    begin_reg_idx = PLC_ModbusConfig.CommonData_BeginRegIdx;
+    size          = PLC_ModbusConfig.CommonData_Size       ;
+    MODBUS_res_read = modbus_read_registers (MODBUS_ctx, (begin_reg_idx+0), size, MODBUS_tab_reg);
+    if (MODBUS_res_read != -1)
+    {
+        PULSE     = MODBUS_tab_reg [0];
+        CycleTime = MODBUS_tab_reg [1];
+    }
+    else
+    {
+        char s[500];
+//      strcpy (s, modbus_strerror (MODBUS_ctx));
+//      s[499] = '\0x00';
+        s[499] = '\0';
+    }
+*/
+}
+void MODBUS_Block02_ReadData ()
+{
+    int begin_reg_idx, size;
+/*
+    // чтение сигналов для модулей №4, 5 и 6 - DO16
+    begin_reg_idx = PLC_ModbusConfig.DOData_BeginRegIdx;
+    size          = PLC_ModbusConfig.DOData_Size       ;
+    MODBUS_res_read = modbus_read_registers (MODBUS_ctx, (begin_reg_idx+0), size, MODBUS_tab_reg);
+    if (MODBUS_res_read != -1)
+    {
+        int first_mod_idx = 4;
+        int mod_idx_offset = 0;
+        int chan_idx = 0;
+        IMIT_TIOSignalAddr addr;
+        int data = 0x0000;
+        int mask = 0x0001;
+         
+        for (mod_idx_offset=0; mod_idx_offset<=2; mod_idx_offset++)
+        {
+            data = MODBUS_tab_reg [mod_idx_offset];
+            addr.ModIdx = first_mod_idx + mod_idx_offset;
+            mask = 0x0001;
+            for (chan_idx=1; chan_idx<=16; chan_idx++)
+            {
+                addr.ChanIdx = chan_idx;
+                IMIT_IOSignalSetValDiscret (addr, ((data & mask) ? 1 : 0));
+                mask = mask << 1;
+            }
+        }
+    }
+    else
+    {
+        char s[500];
+        strcpy (s, modbus_strerror ((int)MODBUS_ctx));
+        s[499] = '\0x00';
+    }
+*/
+    MODBUS_res_read = modbus_read_registers (MODBUS_ctx, 1, 2, MODBUS_tab_reg);
+}
+/*------------------------------------------------------------------*/
+/*              MODBUS: connect to the modbus-server                */
+/*------------------------------------------------------------------*/
+int MODBUS_connect_to_server ()
+{
+    int result = 0;
+
+    if (MODBUS_ctx != NULL) modbus_free (MODBUS_ctx);
+    
+    MODBUS_ctx = modbus_new_tcp ("192.168.56.101", 502);
+//  MODBUS_ctx = modbus_new_tcp (IPAddrAsString (PLC_ModbusConfig.IPAddrPart), PLC_ModbusConfig.Port);
+//  MODBUS_ctx = modbus_new_tcp (Settings., 502);
+        
+    if (MODBUS_ctx == NULL) {result = 0; return result;}
+    
+    MODBUS_res_connect = modbus_connect (MODBUS_ctx);
+    if (MODBUS_res_connect == -1)
+    {
+        char s[500];
+        strcpy (s, modbus_strerror ((int)MODBUS_ctx));
+        s[499] = '\0x00';
+        result = 0;
+        return result;
+    }
+    result = 1;
+    return result;
+}
+#endif /*__DELETED_FRAGMENT__*/
+
+
+/*------------------------------------------------------------------*/
+
+
+
+
+
+
+
 

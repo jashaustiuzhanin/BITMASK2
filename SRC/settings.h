@@ -3,6 +3,7 @@
 
 #include "maskdata.h"
 #include "colorschema.h"
+#include "tmodbusparams.h"
 
 /* глобальный список доступных цветовых схем */
 extern QVector <TColorSchema> ColorSchemas;
@@ -28,6 +29,7 @@ class TSettingsData
     bool Visible_GroupBitmask  ;
 
     bool Visible_Group32Bits_Hex;
+    bool Visible_GroupBitmask_StColorColumns;
 
     bool Visible_MainToolBar;
 
@@ -35,20 +37,23 @@ class TSettingsData
 
     QString ColorSchemaName;
 
+    TModbusParams ModbusParams;
+
   private:
 
     bool ReadFromXML_GroupDecHexBin (QXmlStreamReader *pXmlReader);
     bool ReadFromXML_Group32Bits    (QXmlStreamReader *pXmlReader);
     bool ReadFromXML_GroupBitmask   (QXmlStreamReader *pXmlReader);
     bool ReadFromXML_MainToolBar    (QXmlStreamReader *pXmlReader);
-    bool ReadFromXML_ColorSchema    (QXmlStreamReader *xml_writer);
+    bool ReadFromXML_ColorSchema    (QXmlStreamReader *pXmlReader);
+    bool ReadFromXML_ModbusParams   (QXmlStreamReader *pXmlReader);
 
-    bool SaveToXML_GroupDecHexBin   (QXmlStreamWriter *pXmlReader);
-    bool SaveToXML_Group32Bits      (QXmlStreamWriter *pXmlReader);
-    bool SaveToXML_GroupBitmask     (QXmlStreamWriter *pXmlReader);
-    bool SaveToXML_MainToolBar      (QXmlStreamWriter *pXmlReader);
-    bool SaveToXML_ColorSchema      (QXmlStreamWriter *xml_writer);
-
+    bool SaveToXML_GroupDecHexBin   (QXmlStreamWriter *pXmlWriter);
+    bool SaveToXML_Group32Bits      (QXmlStreamWriter *pXmlWriter);
+    bool SaveToXML_GroupBitmask     (QXmlStreamWriter *pXmlWriter);
+    bool SaveToXML_MainToolBar      (QXmlStreamWriter *pXmlWriter);
+    bool SaveToXML_ColorSchema      (QXmlStreamWriter *pXmlWriter);
+    bool SaveToXMl_ModbusParams     (QXmlStreamWriter *pXmlWriter);
 };
 
 
@@ -77,6 +82,8 @@ class TSettings : public QObject
     bool GetVisible_GroupBitmask    () {return CurrentData.Visible_GroupBitmask   ;}
 
     bool GetVisible_Group32Bits_Hex () {return CurrentData.Visible_Group32Bits_Hex;}
+    bool GetVisible_GroupBitmask_StColorColumns () {return CurrentData.Visible_GroupBitmask_StColorColumns;}
+
 
     bool GetVisible_MainToolBar     () {return CurrentData.Visible_MainToolBar    ;}
 
@@ -87,12 +94,29 @@ class TSettings : public QObject
 
     QString GetText        (int BitNo) {return GetText_p (BitNo);}
 
+    QString GetColorSchemaName      () {return CurrentData.ColorSchemaName        ;}
+
+    void    GetModbusServerIPCfg    (int &AddrA, int &AddrB, int &AddrC, int &AddrD, int &Port)
+    {
+        CurrentData.ModbusParams.GetServerIPCfg (AddrA, AddrB, AddrC, AddrD, Port);
+    }
+    QString GetModbusServerIPCfgStr (bool WithPort) {return CurrentData.ModbusParams.GetServerIPCfgStr (WithPort);}
+    int     GetModbusServerMBNode   ()              {return CurrentData.ModbusParams.GetServerMBNode ();}
+    int     GetModbusValueRegNo     ()              {return CurrentData.ModbusParams.GetValueRegNo   ();}
+    int     GetModbusPulseRegNo     ()              {return CurrentData.ModbusParams.GetPulseRegNo   ();}
+//  int     GetModbusServerPort     ()              {return CurrentData.ModbusParams.GetIPPort       ();}
+    int     GetModbusIPPort         ()              {return CurrentData.ModbusParams.GetIPPort       ();}
+
+    TModbusParams * GetModbusParams () {return &(CurrentData.ModbusParams);}
+
+
     // -- Set-methods -- 
     void SetVisible_GroupDecHexBin  (bool Val) {CurrentData.Visible_GroupDecHexBin  = Val; emit SignalTouched();}
     void SetVisible_Group32Bits     (bool Val) {CurrentData.Visible_Group32Bits     = Val; emit SignalTouched();}
     void SetVisible_GroupBitmask    (bool Val) {CurrentData.Visible_GroupBitmask    = Val; emit SignalTouched();}
                                      
     void SetVisible_Group32Bits_Hex (bool Val) {CurrentData.Visible_Group32Bits_Hex = Val; emit SignalTouched();}
+    bool SetVisible_GroupBitmask_StColorColumns (bool Val) {CurrentData.Visible_GroupBitmask_StColorColumns = Val; emit SignalTouched(); return true;}
 
     void SetVisible_MainToolBar     (bool Val) {CurrentData.Visible_MainToolBar     = Val; emit SignalTouched();}
 
@@ -102,6 +126,19 @@ class TSettings : public QObject
     void SetBackColorSt1 (int BitNo, QColor  Val) {SetColor (BitNo, "Back", 1, Val);}
 
     void SetText         (int BitNo, QString Val) {SetText_p (BitNo, Val);}
+
+    void SetColorSchemaName      (QString Val) {CurrentData.ColorSchemaName         = Val; emit SignalTouched();}
+
+    bool SetModbusServerIPCfg (int  AddrA, int  AddrB, int  AddrC, int  AddrD, int  Port = 502)
+    {
+        return CurrentData.ModbusParams.SetServerIPCfg (AddrA, AddrB, AddrC, AddrD, Port);
+    }
+    bool SetModbusIPCfgByStr   (QString IPCfgString ) {return CurrentData.ModbusParams.SetIPCfgByStr   (IPCfgString );}
+    bool SetModbusIPAddrByStr  (QString IPAddrString) {return CurrentData.ModbusParams.SetIPAddrByStr  (IPAddrString);}
+    bool SetModbusIPPort       (int Port )            {return CurrentData.ModbusParams.SetIPPort       (Port        );}
+    bool SetModbusServerMBNode (int Node )            {return CurrentData.ModbusParams.SetServerMBNode (Node        );}
+    void SetModbusValueRegNo   (int RegNo)            {       CurrentData.ModbusParams.SetValueRegNo (RegNo);         }
+    void SetModbusPulseRegNo   (int RegNo)            {       CurrentData.ModbusParams.SetPulseRegNo (RegNo);         }
 
 
     void SetVoid () {CurrentData.SetDefault(); NoChangedData.SetDefault();}

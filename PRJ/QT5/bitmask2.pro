@@ -49,7 +49,16 @@ SOURCES +=\
     ../../SRC/colorschemas_init.cpp \
     ../../SRC/qtablewidgetwithcopypaste.cpp \
     ../../SRC/thexspinbox.cpp \
-    ../../SRC/tspinbox64.cpp
+    ../../SRC/tspinbox64.cpp \
+    ../../SRC/dialogcolorst0.cpp \
+    ../../SRC/dialogcolorallst.cpp \
+    ../../SRC/dialogcolorst1.cpp \
+    ../../LIB/libmodbus/src/modbus.c \
+    ../../LIB/libmodbus/src/modbus-data.c \
+    ../../LIB/libmodbus/src/modbus-rtu.c \
+    ../../LIB/libmodbus/src/modbus-tcp.c \
+    ../../SRC/tmodbusparams.cpp \
+    ../../SRC/dialogmodbusparams.cpp
 
 HEADERS  += \
     ../../SRC/mainwindow.h \
@@ -61,15 +70,30 @@ HEADERS  += \
     ../../SRC/qtablewidgetwithcopypaste.h \
     ../../SRC/thexspinbox.h \
     ../../SRC/tspinbox64.h \
-    ../../SRC/version.h
+    ../../SRC/version.h \
+    ../../SRC/dialogcolorst0.h \
+    ../../SRC/dialogcolorallst.h \
+    ../../SRC/dialogcolorst1.h \
+    ../../LIB/libmodbus/config.h \
+    ../../SRC/tmodbusparams.h \
+    ../../SRC/dialogmodbusparams.h
 
 FORMS    += \
     ../../SRC/mainwindow.ui \
-    ../../SRC/dlgmaskdatastyle.ui
+    ../../SRC/dlgmaskdatastyle.ui \
+    ../../SRC/dialogcolorst0.ui \
+    ../../SRC/dialogcolorallst.ui \
+    ../../SRC/dialogcolorst1.ui \
+    ../../SRC/dialogmodbusparams.ui
 
-INCLUDEPATH += ../../SRC/
+INCLUDEPATH += ../../SRC/ \
+               ../../LIB/libmodbus/src/ \
+               ../../LIB/libmodbus/
 
-DEPENDPATH  += ../../SRC
+DEPENDPATH  += ../../SRC \
+               ../../LIB/libmodbus/src/ \
+               ../../LIB/libmodbus/
+
 
 RESOURCES += \
     ../../SRC/res.qrc
@@ -77,4 +101,5 @@ RESOURCES += \
 #RC_FILE += ../../SRC/mainico.rc
 win32 {
 RC_FILE += ../../SRC/appinfo.rc
+LIBS += -lsetupapi -lwsock32 -lws2_32
 }

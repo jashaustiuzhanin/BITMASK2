@@ -9,6 +9,10 @@
 #include "bmqspinbox.h"
 #include "settings.h"
 #include "colorschema.h"
+extern "C"
+{
+#include <modbus.h>
+}
 
 /*
 class HexSpinbox : public QSpinBox
@@ -73,8 +77,33 @@ private:
 
     QLabel *pStatusLabel;
     QString MainTitle;
+    QLabel *pPulseLabel ;
+    QLabel *pValSrcLabel;
 
     bool SaveCurrSettingsBeforeNextAction (QString InformTextTail);
+
+    typedef enum TValSrc
+    {
+        valsrcMANUAL =  0,
+        valsrcMODBUS =  1,
+
+        valsrcStub   = -1
+    }
+    TValSrc;
+
+    TValSrc ValSrc;
+
+    int  ModbusConnectToServer ();
+    void ModbusReadValue ();
+    void ModbusReadPulse ();
+
+    modbus_t *MODBUS_ctx        ;
+    int       MODBUS_res_connect;
+    int       MODBUS_res_read   ;
+    int       MODBUS_res_write  ;
+    uint16_t  MODBUS_tab_reg [64];
+
+    int ModbusServerPulse;
 
 private slots:
     void ShowValue ();
@@ -82,6 +111,7 @@ private slots:
     void ShowGroups ();
     void ShowColorSchema ();
     void ShowStatus ();
+    void SetColorSchemaByName (QString Name);
 
     void SlotOnSpnDecimal     ();
     void SlotOnSpnHexadecimal ();
@@ -97,6 +127,12 @@ private slots:
 
     void SlotOnSettingsTouched ();
 
+    void SlotBitmaskSelectionChanged ();
+
+    void SlotModbusStart ();
+    void SlotModbusStop  ();
+    void SlotCycleDataRead ();
+
     void on_actVIEW_DEC_HEX_BIN_triggered();
     void on_actVIEW_32_bits_triggered();
     void on_actVIEW_Bitmask_triggered();
@@ -110,6 +146,13 @@ private slots:
     void on_actVIEW_Color_jasha_triggered();
     void on_actHELP_About_triggered();
     void on_actFILE_Close_triggered();
+    void on_actVIEW_Bitmask_St_Color_Columns_triggered();
+    void on_actEDIT_Choice_Color_AllSt_triggered();
+    void on_actEDIT_Choice_Color_St0_triggered();
+    void on_actEDIT_Choice_Color_St1_triggered();
+    void on_actMODBUS_Start_triggered();
+    void on_actMODBUS_Stop_triggered();
+    void on_actMODBUS_Settings_triggered();
 };
 
 

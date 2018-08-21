@@ -17,6 +17,7 @@ void TSettingsData :: SetDefault ()
     Visible_GroupBitmask    = false;
 
     Visible_Group32Bits_Hex = true ;
+    Visible_GroupBitmask_StColorColumns = true ;
 
     Visible_MainToolBar     = true ;
 
@@ -79,6 +80,12 @@ bool TSettingsData :: SaveToXML   (QString FileName)
     // сохраняются настройки выбранной цветовой схемы
     {
         tmp_result = SaveToXML_ColorSchema (&xml_writer);
+        if (!tmp_result) {file.close (); return false;}
+    }
+
+    // сохраняются настройки Modbus
+    {
+        tmp_result = SaveToXMl_ModbusParams (&xml_writer);
         if (!tmp_result) {file.close (); return false;}
     }
 
@@ -157,8 +164,16 @@ bool TSettingsData :: ReadFromXML (QString FileName)
             // Найден тег начала данных, содержащих настройки выбранной цветовой схемы
             if (xml_reader.name () == "ColorSchema")
             {
-                // считываются настройки группы 32 bits
+                // считываются настройки выбранной цветовой схемы
                 tmp_result = ReadFromXML_ColorSchema    (&xml_reader);
+                if (!tmp_result) {file.close (); return false;}
+            }
+
+            // Найден тег начала данных, содержащих настройки Modbus
+            if (xml_reader.name () == "Modbus")
+            {
+                // считываются настройки Modbus
+                tmp_result = ReadFromXML_ModbusParams   (&xml_reader);
                 if (!tmp_result) {file.close (); return false;}
             }
 
@@ -180,6 +195,7 @@ bool TSettingsData :: ReadFromXML (QString FileName)
 bool TSettingsData :: ReadFromXML_GroupDecHexBin (QXmlStreamReader *pXmlReader)
 {
     bool exit_flag = false;
+    Q_UNUSED (exit_flag)
 
     // считываются все атрибуты и перебираются для считывания тех, которые нужны
     foreach (const QXmlStreamAttribute &attr, pXmlReader->attributes())
@@ -196,6 +212,7 @@ bool TSettingsData :: ReadFromXML_GroupDecHexBin (QXmlStreamReader *pXmlReader)
 bool TSettingsData :: ReadFromXML_Group32Bits (QXmlStreamReader *pXmlReader)
 {
     bool exit_flag = false;
+    Q_UNUSED (exit_flag)
 
     // считываются все атрибуты и перебираются для считывания тех, которые нужны
     foreach (const QXmlStreamAttribute &attr, pXmlReader->attributes())
@@ -222,6 +239,7 @@ bool TSettingsData :: ReadFromXML_GroupBitmask (QXmlStreamReader *pXmlReader)
     {
         // получение значений, когда найдены нужные атрибуты
         if (attr.name().toString() == "show") {Visible_GroupBitmask = (attr.value().toString () == "true");}
+        if (attr.name().toString() == "st_color_columns_show") {Visible_GroupBitmask_StColorColumns = (attr.value().toString () == "true");}
     }
 
     /* Цикл до тех пор, пока не будет достигнут конец тега GroupBitmask или конец документа */
@@ -278,6 +296,7 @@ bool TSettingsData :: ReadFromXML_GroupBitmask (QXmlStreamReader *pXmlReader)
 bool TSettingsData :: ReadFromXML_MainToolBar (QXmlStreamReader *pXmlReader)
 {
     bool exit_flag = false;
+    Q_UNUSED (exit_flag)
 
     // считываются все атрибуты и перебираются для считывания тех, которые нужны
     foreach (const QXmlStreamAttribute &attr, pXmlReader->attributes())
@@ -294,12 +313,51 @@ bool TSettingsData :: ReadFromXML_MainToolBar (QXmlStreamReader *pXmlReader)
 bool TSettingsData :: ReadFromXML_ColorSchema (QXmlStreamReader *pXmlReader)
 {
     bool exit_flag = false;
+    Q_UNUSED (exit_flag)
 
     // считываются все атрибуты и перебираются для считывания тех, которые нужны
     foreach (const QXmlStreamAttribute &attr, pXmlReader->attributes())
     {
         // получение значений, когда найдены нужные атрибуты
         if (attr.name().toString() == "name") {ColorSchemaName = attr.value().toString ();}
+    }
+
+    return true;
+}
+/*------------------------------------------------------------------*/
+/*                   считываются настройки Modbus                   */
+/*------------------------------------------------------------------*/
+bool TSettingsData :: ReadFromXML_ModbusParams (QXmlStreamReader *pXmlReader)
+{
+    bool exit_flag = false;
+    Q_UNUSED (exit_flag)
+
+    // считываются все атрибуты и перебираются для считывания тех, которые нужны
+    foreach (const QXmlStreamAttribute &attr, pXmlReader->attributes())
+    {
+        // получение значений, когда найдены нужные атрибуты
+        if (attr.name().toString() == "IP") 
+        {
+            /*ColorSchemaName = attr.value().toString ();*/
+            QString s = attr.value().toString ();
+            ModbusParams.SetIPAddrByStr (s);
+        }
+        if (attr.name().toString() == "Port")
+        {
+            ModbusParams.SetIPPort (attr.value().toString().toInt());
+        }
+        if (attr.name().toString() == "MBNode")
+        {
+            ModbusParams.SetServerMBNode (attr.value().toString().toInt());
+        }
+        if (attr.name().toString() == "ValueRegNo")
+        {
+            ModbusParams.SetValueRegNo (attr.value().toString().toInt());
+        }
+        if (attr.name().toString() == "PulseRegNo")
+        {
+            ModbusParams.SetPulseRegNo (attr.value().toString().toInt());
+        }
     }
 
     return true;
@@ -348,6 +406,7 @@ bool TSettingsData :: SaveToXML_GroupBitmask (QXmlStreamWriter *pXmlWriter)
 
     // записываются атрибуты общего тега
     pXmlWriter->writeAttribute    ("show", (Visible_GroupBitmask ? "true" : "false"));
+    pXmlWriter->writeAttribute    ("st_color_columns_show", (Visible_GroupBitmask_StColorColumns ? "true" : "false"));
 
 
     // записываются параметры тегов BitXX
@@ -403,6 +462,27 @@ bool TSettingsData :: SaveToXML_ColorSchema (QXmlStreamWriter *pXmlWriter)
     return true;
 }
 /*------------------------------------------------------------------*/
+/*                  Записываются настройки Modbus                   */
+/*------------------------------------------------------------------*/
+bool TSettingsData :: SaveToXMl_ModbusParams (QXmlStreamWriter *pXmlWriter)
+{
+    // создаётся общий тег
+    pXmlWriter->writeStartElement ("Modbus");
+
+    // записываются атрибуты общего тега
+    pXmlWriter->writeAttribute    ("IP"        , ModbusParams.GetServerIPCfgStr (false));
+    pXmlWriter->writeAttribute    ("Port"      , QString::number(ModbusParams.GetIPPort       ()));
+    pXmlWriter->writeAttribute    ("MBNode"    , QString::number(ModbusParams.GetServerMBNode ()));
+    pXmlWriter->writeAttribute    ("ValueRegNo", QString::number(ModbusParams.GetValueRegNo   ()));
+    pXmlWriter->writeAttribute    ("PulseRegNo", QString::number(ModbusParams.GetPulseRegNo   ()));
+
+    // общий тег закрывается
+    pXmlWriter->writeEndElement   ();
+
+
+    return true;
+}
+/*------------------------------------------------------------------*/
 
 
 
@@ -448,6 +528,7 @@ bool TSettings :: IsChanged ()
     if (CurrentData.Visible_Group32Bits     != NoChangedData.Visible_Group32Bits    ) return true ;
     if (CurrentData.Visible_GroupBitmask    != NoChangedData.Visible_GroupBitmask   ) return true ;
     if (CurrentData.Visible_Group32Bits_Hex != NoChangedData.Visible_Group32Bits_Hex) return true ;
+    if (CurrentData.Visible_GroupBitmask_StColorColumns != NoChangedData.Visible_GroupBitmask_StColorColumns) return true ;
     if (CurrentData.Visible_MainToolBar     != NoChangedData.Visible_MainToolBar    ) return true ;
 
     for (int i=0; i<32; i++)
@@ -461,6 +542,8 @@ bool TSettings :: IsChanged ()
     }
 
     if (CurrentData.ColorSchemaName != NoChangedData.ColorSchemaName) return true ;
+
+    if (CurrentData.ModbusParams != NoChangedData.ModbusParams) return true;
 
     return false;
 }

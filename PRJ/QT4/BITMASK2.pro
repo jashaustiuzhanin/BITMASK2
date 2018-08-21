@@ -31,7 +31,16 @@ SOURCES +=\
     ../../SRC/bmqspinbox.cpp \
     ../../SRC/dlgmaskdatastyle.cpp \
     ../../SRC/settings.cpp \
-    ../../SRC/colorschemas_init.cpp
+    ../../SRC/colorschemas_init.cpp \
+    ../../SRC/dialogcolorst0.cpp \
+    ../../SRC/dialogcolorst1.cpp \
+    ../../SRC/dialogcolorallst.cpp \
+    ../../LIB/libmodbus/src/modbus-tcp.c \
+    ../../LIB/libmodbus/src/modbus-rtu.c \
+    ../../LIB/libmodbus/src/modbus-data.c \
+    ../../LIB/libmodbus/src/modbus.c \
+    ../../SRC/tmodbusparams.cpp \
+    ../../SRC/dialogmodbusparams.cpp
 
 HEADERS  += \
     ../../SRC/mainwindow.h \
@@ -39,15 +48,36 @@ HEADERS  += \
     ../../SRC/dlgmaskdatastyle.h \
     ../../SRC/maskdata.h \
     ../../SRC/settings.h \
-    ../../SRC/colorschema.h
+    ../../SRC/colorschema.h \
+    ../../SRC/dialogcolorst0.h \
+    ../../SRC/dialogcolorst1.h \
+    ../../SRC/dialogcolorallst.h \
+    ../../LIB/libmodbus/config.h \
+    ../../SRC/tmodbusparams.h \
+    ../../SRC/dialogmodbusparams.h
 
 FORMS    += \
     ../../SRC/mainwindow.ui \
-    ../../SRC/dlgmaskdatastyle.ui
+    ../../SRC/dlgmaskdatastyle.ui \
+    ../../SRC/dialogcolorst0.ui \
+    ../../SRC/dialogcolorst1.ui \
+    ../../SRC/dialogcolorallst.ui \
+    ../../SRC/dialogmodbusparams.ui
 
-INCLUDEPATH += ../../SRC/
+INCLUDEPATH += ../../SRC/ \
+               ../../LIB/libmodbus/ \
+               ../../LIB/libmodbus/src/
 
-DEPENDPATH  += ../../SRC
+DEPENDPATH  += ../../SRC \
+               ../../LIB/libmodbus/ \
+               ../../LIB/libmodbus/src/
 
 RESOURCES += \
     ../../SRC/res.qrc
+
+#RC_FILE += ../../SRC/mainico.rc
+win32 {
+RC_FILE += ../../SRC/appinfo.rc
+LIBS += -lsetupapi -lwsock32 -lws2_32
+DEFINES +=  EINPROGRESS=WSAEINPROGRESS
+}

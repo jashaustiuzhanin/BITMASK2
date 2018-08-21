@@ -27,8 +27,16 @@ DlgMaskDataStyle :: ~DlgMaskDataStyle ()
 void DlgMaskDataStyle :: Repaint ()
 {
 
-    ui->lblTitle->setText (QString ("Mask data style select") + 
-                           QString ("\nbit ") + QString::number (BitNo));
+    if ((BitNo >= 0) && (BitNo <= 31))
+    {
+        ui->lblTitle->setText (QString ("Mask data style for") + 
+                               QString ("\nbit ") + QString::number (BitNo));
+    }
+    else
+    {
+        ui->lblTitle->setText (QString ("Mask data style for") +
+                               QString ("\nselected bits"));
+    }
 
     QString back_color_string;
     QString text_color_string;

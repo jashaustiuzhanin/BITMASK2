@@ -29,5 +29,11 @@
         <file>PICS/FILE_Save_m.png</file>
         <file>PICS/FILE_SaveAs.png</file>
         <file>PICS/FILE_SaveAs_m.png</file>
+        <file>PICS/colors_allst.png</file>
+        <file>PICS/colors_allst_m.png</file>
+        <file>PICS/colors_st0.png</file>
+        <file>PICS/colors_st0_m.png</file>
+        <file>PICS/colors_st1.png</file>
+        <file>PICS/colors_st1_m.png</file>
     </qresource>
 </RCC>
